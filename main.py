@@ -3,6 +3,7 @@ from tkinter import messagebox
 
 from PIL import ImageTk, Image
 
+from models import FakeData
 
 class Gui(Tk):
 
@@ -49,15 +50,6 @@ class Gui(Tk):
         patient_frame.grid_columnconfigure(1, weight=1, uniform="group1")
         patient_frame.grid_rowconfigure(0, weight=1)
 
-        self.__listbox = Listbox(all_patients_frame, activestyle="none")
-        self.__listbox.bind("<<ListboxSelect>>", )
-        self.__listbox.pack(fill=BOTH, expand=TRUE)
-
-        self.__listbox.insert(END, "a list entry")
-
-        for item in ["one", "two", "three", "four"]:
-            self.__listbox.insert(END, item)
-
         patient_details_frame_container = Frame(patient_details_frame, borderwidth=10)
         patient_details_frame_container.pack(fill=NONE, expand=TRUE)
 
@@ -71,7 +63,14 @@ class Gui(Tk):
         self.__prezime_label = Label(patient_details_frame_container).grid(row=2, sticky=E)
         self.__datum_label = Label(patient_details_frame_container).grid(row=3, sticky=E)
 
-    def listboxSelect(self):
+        self.__listbox = Listbox(all_patients_frame, activestyle="none")
+        self.__listbox.bind("<<ListboxSelect>>", self.listboxSelect)
+        self.listboxInsertData(self.__data)
+
+        self.__listbox.pack(fill=BOTH, expand=TRUE)
+
+
+    def listboxSelect(self, event=None):
         if not self.__listbox.curselection():
             self.ocistiLabele()
             return
@@ -127,4 +126,7 @@ class Gui(Tk):
 
 
 if __name__ == '__main__':
-    gui = Gui(None)
+    fakeData = FakeData()
+    patientData = fakeData.getPacijenti
+
+    gui = Gui(patientData)

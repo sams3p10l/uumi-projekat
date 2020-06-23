@@ -105,16 +105,26 @@ class Snimanje:
             format_linije.format("Prezime", self.__lekar)]
         )
 
-if __name__ == '__main__':
-    pacijent1 = Pacijent("111", "Petar", "Petrovic", "31839198")
-    pacijent2 = Pacijent("112", "Petra", "Petrovic", "31839414")
-    pacijent3 = Pacijent("113", "Milos", "Petrovic", "31525198")
-    pacijent4 = Pacijent("114", "Zoran", "Petrovic", "82828282")
 
-    pacijenti = []
-    pacijenti.append(pacijent1)
-    pacijenti.append(pacijent2)
-    pacijenti.append(pacijent3)
-    pacijenti.append(pacijent4)
+class FakeData:
+    def __init__(self):
+        self.__pacijenti = []
+        self.__snimci = []
 
-    pacijent1.prikazi_pacijente(pacijenti)
+        self.createMockPatients()
+
+    def createMockPatients(self):
+        pacijent1 = Pacijent("111", "Petar", "Petrovic", "31839198")
+        pacijent2 = Pacijent("112", "Petra", "Petrovic", "31839414")
+        pacijent3 = Pacijent("113", "Milos", "Petrovic", "31525198")
+        pacijent4 = Pacijent("114", "Zoran", "Petrovic", "82828282")
+
+        self.__pacijenti.append(pacijent1)
+        self.__pacijenti.append(pacijent2)
+        self.__pacijenti.append(pacijent3)
+        self.__pacijenti.append(pacijent4)
+
+    @property
+    def getPacijenti(self):
+        return self.__pacijenti
+
