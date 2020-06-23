@@ -44,17 +44,19 @@ class Gui(Tk):
         all_patients_frame.grid(sticky="nsew", row=0, column=0)
         patient_details_frame.grid(sticky="nsew", row=0, column=1)
 
+        # kopirano sa SO
         patient_frame.grid_columnconfigure(0, weight=1, uniform="group1")
         patient_frame.grid_columnconfigure(1, weight=1, uniform="group1")
         patient_frame.grid_rowconfigure(0, weight=1)
 
-        listbox = Listbox(all_patients_frame, activestyle="none")
-        listbox.pack(fill=BOTH, expand=TRUE)
+        self.__listbox = Listbox(all_patients_frame, activestyle="none")
+        self.__listbox.bind("<<ListboxSelect>>", )
+        self.__listbox.pack(fill=BOTH, expand=TRUE)
 
-        listbox.insert(END, "a list entry")
+        self.__listbox.insert(END, "a list entry")
 
         for item in ["one", "two", "three", "four"]:
-            listbox.insert(END, item)
+            self.__listbox.insert(END, item)
 
         patient_details_frame_container = Frame(patient_details_frame, borderwidth=10)
         patient_details_frame_container.pack(fill=NONE, expand=TRUE)
@@ -64,11 +66,38 @@ class Gui(Tk):
         Label(patient_details_frame_container, text="Prezime: ").grid(row=2, sticky=E)
         Label(patient_details_frame_container, text="Datum rodjenja: ").grid(row=3, sticky=E)
 
-        lbo_label = Label(patient_details_frame_container).grid(row=0, sticky=E)
-        ime_label = Label(patient_details_frame_container).grid(row=1, sticky=E)
-        prezime_label = Label(patient_details_frame_container).grid(row=2, sticky=E)
-        datum_label = Label(patient_details_frame_container).grid(row=3, sticky=E)
+        self.__lbo_label = Label(patient_details_frame_container).grid(row=0, sticky=E)
+        self.__ime_label = Label(patient_details_frame_container).grid(row=1, sticky=E)
+        self.__prezime_label = Label(patient_details_frame_container).grid(row=2, sticky=E)
+        self.__datum_label = Label(patient_details_frame_container).grid(row=3, sticky=E)
 
+    def listboxSelect(self):
+        if not self.__listbox.curselection():
+            self.ocistiLabele()
+            return
+
+        indeks = self.__listbox.curselection()[0]
+        pacijent = self.__data[indeks]
+        self.popuniLabele(pacijent)
+
+    def listboxInsertData(self, pacijenti):
+        self.__listbox.delete(0, END)
+        for pacijent in pacijenti:
+            self.__listbox.insert(END, pacijent.ime + " " + pacijent.prezime)
+
+        self.ocistiLabele()
+
+    def ocistiLabele(self):
+        self.__lbo_label["text"] = ""
+        self.__ime_label["text"] = ""
+        self.__prezime_label["text"] = ""
+        self.__datum_label["text"] = ""
+
+    def popuniLabele(self, pacijent):
+        self.__lbo_label["text"] = pacijent.LBO
+        self.__ime_label["text"] = pacijent.ime
+        self.__prezime_label["text"] = pacijent.prezime
+        self.__datum_label["text"] = pacijent.datumrodj
 
     def komanda_izlaz(self):
         odgovor = messagebox.askokcancel("Upozorenje", "Da li ste sigurni da želite da napustite aplikaciju?",
