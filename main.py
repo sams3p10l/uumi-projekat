@@ -5,21 +5,34 @@ from PIL import ImageTk, Image
 
 from models import FakeData
 
+
 class Gui(Tk):
 
     def __init__(self, data):
         super().__init__()
+
+        self.__data = data
 
         self.__lbo = ""
         self.__ime = ""
         self.__prezime = ""
         self.__datumrodj = ""
 
-        self.__data = data
-
         self.geometry("640x480")
 
         main_frame = Frame(self, relief=GROOVE, padx=10, pady=10)
+        self.__patient_frame = Frame(self, height=480, width=640)
+        self.__all_patients_frame = Frame(self.__patient_frame, borderwidth=2, relief="ridge")
+        self.__patient_details_frame = Frame(self.__patient_frame, borderwidth=2)
+        self.__patient_details_frame_container = Frame(self.__patient_details_frame, borderwidth=10)
+
+        self.__lbo_label = Label(self.__patient_details_frame_container)
+        self.__ime_label = Label(self.__patient_details_frame_container)
+        self.__prezime_label = Label(self.__patient_details_frame_container)
+        self.__datum_label = Label(self.__patient_details_frame_container)
+
+        self.__listbox = Listbox(self.__all_patients_frame, activestyle="none")
+
         main_frame.pack(fill=NONE, expand=TRUE)
 
         self.__logo = ImageTk.PhotoImage(Image.open("klinika.png"))
@@ -36,39 +49,31 @@ class Gui(Tk):
     def prikaziPacijente(self, master: Frame):
         master.forget()
 
-        patient_frame = Frame(self, height=480, width=640)
-        patient_frame.pack(fill=BOTH, expand=TRUE)
-
-        all_patients_frame = Frame(patient_frame, borderwidth=2, relief="ridge")
-        patient_details_frame = Frame(patient_frame, borderwidth=2)
-
-        all_patients_frame.grid(sticky="nsew", row=0, column=0)
-        patient_details_frame.grid(sticky="nsew", row=0, column=1)
+        self.__patient_frame.pack(fill=BOTH, expand=TRUE)
+        self.__all_patients_frame.grid(sticky="nsew", row=0, column=0)
+        self.__patient_details_frame.grid(sticky="nsew", row=0, column=1)
 
         # kopirano sa SO
-        patient_frame.grid_columnconfigure(0, weight=1, uniform="group1")
-        patient_frame.grid_columnconfigure(1, weight=1, uniform="group1")
-        patient_frame.grid_rowconfigure(0, weight=1)
+        self.__patient_frame.grid_columnconfigure(0, weight=1, uniform="group1")
+        self.__patient_frame.grid_columnconfigure(1, weight=1, uniform="group1")
+        self.__patient_frame.grid_rowconfigure(0, weight=1)
 
-        patient_details_frame_container = Frame(patient_details_frame, borderwidth=10)
-        patient_details_frame_container.pack(fill=NONE, expand=TRUE)
+        self.__patient_details_frame_container.pack(fill=NONE, expand=TRUE)
 
-        Label(patient_details_frame_container, text="LBO: ").grid(row=0, sticky=E)
-        Label(patient_details_frame_container, text="Ime: ").grid(row=1, sticky=E)
-        Label(patient_details_frame_container, text="Prezime: ").grid(row=2, sticky=E)
-        Label(patient_details_frame_container, text="Datum rodjenja: ").grid(row=3, sticky=E)
+        Label(self.__patient_details_frame_container, text="LBO: ").grid(row=0, sticky=E)
+        Label(self.__patient_details_frame_container, text="Ime: ").grid(row=1, sticky=E)
+        Label(self.__patient_details_frame_container, text="Prezime: ").grid(row=2, sticky=E)
+        Label(self.__patient_details_frame_container, text="Datum rodjenja: ").grid(row=3, sticky=E)
 
-        self.__lbo_label = Label(patient_details_frame_container).grid(row=0, sticky=E)
-        self.__ime_label = Label(patient_details_frame_container).grid(row=1, sticky=E)
-        self.__prezime_label = Label(patient_details_frame_container).grid(row=2, sticky=E)
-        self.__datum_label = Label(patient_details_frame_container).grid(row=3, sticky=E)
+        self.__lbo_label.grid(row=0, column=1, sticky=W)
+        self.__ime_label.grid(row=1, column=1, sticky=W)
+        self.__prezime_label.grid(row=2, column=1, sticky=W)
+        self.__datum_label.grid(row=3, column=1, sticky=W)
 
-        self.__listbox = Listbox(all_patients_frame, activestyle="none")
         self.__listbox.bind("<<ListboxSelect>>", self.listboxSelect)
-        self.listboxInsertData(self.__data)
+        self.listboxInsertData(self.__data, self.__listbox)
 
         self.__listbox.pack(fill=BOTH, expand=TRUE)
-
 
     def listboxSelect(self, event=None):
         if not self.__listbox.curselection():
@@ -79,10 +84,10 @@ class Gui(Tk):
         pacijent = self.__data[indeks]
         self.popuniLabele(pacijent)
 
-    def listboxInsertData(self, pacijenti):
-        self.__listbox.delete(0, END)
+    def listboxInsertData(self, pacijenti, listbox):
+        listbox.delete(0, END)
         for pacijent in pacijenti:
-            self.__listbox.insert(END, pacijent.ime + " " + pacijent.prezime)
+            listbox.insert(END, pacijent.ime + " " + pacijent.prezime)
 
         self.ocistiLabele()
 
