@@ -32,6 +32,7 @@ class Gui(Tk):
         self.__datum_label = Label(self.__patient_details_frame_container)
 
         self.__listbox = Listbox(self.__all_patients_frame, activestyle="none")
+        self.__search = Entry(self.__all_patients_frame)
 
         main_frame.pack(fill=NONE, expand=TRUE)
 
@@ -70,10 +71,32 @@ class Gui(Tk):
         self.__prezime_label.grid(row=2, column=1, sticky=W)
         self.__datum_label.grid(row=3, column=1, sticky=W)
 
+        Label(self.__all_patients_frame, text="Pretraga").pack()
+        self.__search.pack(fill=X)
+        self.__search.bind("<Key>", self.keyPressed)
+
         self.__listbox.bind("<<ListboxSelect>>", self.listboxSelect)
         self.listboxInsertData(self.__data, self.__listbox)
 
         self.__listbox.pack(fill=BOTH, expand=TRUE)
+
+    def keyPressed(self, event=None):
+        upisano = self.__search.get().lower()
+
+        if upisano == "":
+            self.listboxInsertData(patientData, self.__listbox)
+            return
+
+        bazaImena = {}
+        for pacijent in patientData:
+            bazaImena[pacijent.ime.lower() + pacijent.prezime.lower()] = pacijent
+
+        returnValues = []
+        for imeprezime in bazaImena.keys():
+            if upisano in imeprezime:
+                returnValues.append(bazaImena.get(imeprezime))
+
+        self.listboxInsertData(returnValues, self.__listbox)
 
     def listboxSelect(self, event=None):
         if not self.__listbox.curselection():
