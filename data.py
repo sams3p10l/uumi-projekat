@@ -1,3 +1,6 @@
+import pickle
+
+
 class Pacijent:
     @property
     def LBO(self):
@@ -71,7 +74,7 @@ class Snimanje:
         return self.__datum_i_vreme
 
     @datum_i_vreme.setter
-    def datum_i_vreme(self,datum_i_vreme ):
+    def datum_i_vreme(self, datum_i_vreme):
         self.__datum_i_vreme = datum_i_vreme
 
     @property
@@ -90,9 +93,8 @@ class Snimanje:
     def lekar(self, lekar):
         self.__lekar = lekar
 
-
     def __init__(self, datum_i_vreme, izvestaj, lekar):
-        self.__datum_i_vreme= datum_i_vreme
+        self.__datum_i_vreme = datum_i_vreme
         self.__izvestaj = izvestaj
         self.__lekar = lekar
 
@@ -106,17 +108,20 @@ class Snimanje:
         )
 
 
-class FakeData:
+class Data:
+    __patientDataStorage = "patient_data_storage"
+
     def __init__(self):
         self.__pacijenti = []
         self.__snimci = []
 
         self.createMockPatients()
+        self.sacuvaj(self.__pacijenti)
 
     def createMockPatients(self):
         pacijent1 = Pacijent("111", "Petar", "Petrovic", "31839198")
-        pacijent2 = Pacijent("112", "Petra", "Petrovic", "31839414")
-        pacijent3 = Pacijent("113", "Milos", "Petrovic", "31525198")
+        pacijent2 = Pacijent("112", "Petra", "Jovanovic", "31839414")
+        pacijent3 = Pacijent("113", "Milos", "Markovic", "31525198")
         pacijent4 = Pacijent("114", "Zoran", "Petrovic", "82828282")
 
         self.__pacijenti.append(pacijent1)
@@ -128,3 +133,29 @@ class FakeData:
     def getPacijenti(self):
         return self.__pacijenti
 
+    @classmethod
+    def sacuvaj(cls, podaci):
+        file = open(cls.__patientDataStorage, "wb")
+        pickle.dump(podaci, file)
+        file.close()
+
+    def ucitaj(self):
+        try:
+            file = open(self.__patientDataStorage, "rb")
+            podaci = pickle.load(file)
+            file.close()
+        except FileNotFoundError:
+            self.createMockPatients()
+
+        return podaci
+
+    @classmethod
+    def sacuvajPacijenta(cls, pacijent):
+        file = open(cls.__patientDataStorage, "a+")
+        pickle.dump(pacijent, file)
+        file.close()
+
+    def ocistiPacijente(self):
+        file = open(self.__patientDataStorage, "wb")
+        pickle.dump(None, file)
+        file.close()
