@@ -3,15 +3,15 @@ from tkinter import messagebox
 
 from PIL import ImageTk, Image
 
-from data import Data
+from data import *
 
 
 class Gui(Tk):
 
-    def __init__(self, data):
+    def __init__(self, localdata):
         super().__init__()
 
-        self.__data = data
+        self.__data = localdata
 
         self.__lbo = ""
         self.__ime = ""
@@ -20,7 +20,7 @@ class Gui(Tk):
 
         self.geometry("640x480")
 
-        main_frame = Frame(self, relief=GROOVE, padx=10, pady=10)
+        self.__main_frame = Frame(self, relief=GROOVE, padx=10, pady=10)
         self.__patient_frame = Frame(self, height=480, width=640)
         self.__all_patients_frame = Frame(self.__patient_frame, borderwidth=2, relief="ridge")
         self.__patient_details_frame = Frame(self.__patient_frame, borderwidth=2)
@@ -34,21 +34,21 @@ class Gui(Tk):
         self.__listbox = Listbox(self.__all_patients_frame, activestyle="none")
         self.__search = Entry(self.__all_patients_frame)
 
-        main_frame.pack(fill=NONE, expand=TRUE)
+        self.__main_frame.pack(fill=NONE, expand=TRUE)
 
         self.__logo = ImageTk.PhotoImage(Image.open("klinika.png"))
 
-        self.podesiMeni(main_frame)
-        self.prikaziPocetnu(main_frame)
+        self.podesiMeni(self.__main_frame)
+        self.prikaziPocetnu(self.__main_frame)
 
-        main_frame.mainloop()
+        self.__main_frame.mainloop()
 
     def prikaziPocetnu(self, master):
         panel = Label(master, image=self.__logo)
         panel.pack()
 
-    def prikaziPacijente(self, master: Frame):
-        master.forget()
+    def prikaziPacijente(self):
+        self.__main_frame.forget()
 
         self.__patient_frame.pack(fill=BOTH, expand=TRUE)
         self.__all_patients_frame.grid(sticky="nsew", row=0, column=0)
@@ -138,8 +138,8 @@ class Gui(Tk):
 
         subMenu = Menu(menu)
         menu.add_cascade(label="Pacijenti", menu=subMenu)
-        subMenu.add_command(label="Prikaz pacijenata", command=lambda: self.prikaziPacijente(master))
-        subMenu.add_command(label="Dodavanje pacijenata")
+        subMenu.add_command(label="Prikaz pacijenata", command=self.prikaziPacijente)
+        subMenu.add_command(label="Dodavanje pacijenata", command=lambda: self.NewPatientWindow(master))
         subMenu.add_command(label="Izmena pacijenata")
 
         snimakMenu = Menu()
@@ -151,6 +151,30 @@ class Gui(Tk):
         izlazMenu = Menu()
         menu.add_cascade(label="Izlaz", menu=izlazMenu)
         izlazMenu.add_command(label="Izlaz", command=self.komanda_izlaz)
+
+    class NewPatientWindow:
+        def __init__(self, master):
+            window = Toplevel(master)
+
+            window.title("Dodaj pacijenta")
+            window.geometry("240x120")
+
+            Label(window, text="LBO: ").grid(row=0, sticky=E)
+            Label(window, text="Ime: ").grid(row=1, sticky=E)
+            Label(window, text="Prezime: ").grid(row=2, sticky=E)
+            Label(window, text="Datum rodjenja: ").grid(row=3, sticky=E)
+
+            self.__lbo_entry = Entry(window).grid(row=0, column=1, sticky=W)
+            self.__ime_entry = Entry(window).grid(row=1, column=1, sticky=W)
+            self.__prezime_entry = Entry(window).grid(row=2, column=1, sticky=W)
+            self.__datum_entry = Entry(window).grid(row=3, column=1, sticky=W)
+
+            Button(window, text="Dodaj", command=self.saveNewPatient).grid(row=5, columnspan=2)
+
+        def saveNewPatient(self):
+            noviPacijent = Pacijent(self.__lbo_entry.get(), self.__ime_entry.get(), self.__prezime_entry.get(),
+                                    self.__datum_entry.get())
+            data.sacuvajPacijenta(noviPacijent)
 
 
 if __name__ == '__main__':
