@@ -1,3 +1,5 @@
+import pickle
+
 class Pacijent:
     @property
     def LBO(self):
@@ -106,7 +108,7 @@ class Snimanje:
         )
 
 
-class FakeData:
+class Data:
     def __init__(self):
         self.__pacijenti = []
         self.__snimci = []
@@ -115,8 +117,8 @@ class FakeData:
 
     def createMockPatients(self):
         pacijent1 = Pacijent("111", "Petar", "Petrovic", "31839198")
-        pacijent2 = Pacijent("112", "Petra", "Petrovic", "31839414")
-        pacijent3 = Pacijent("113", "Milos", "Petrovic", "31525198")
+        pacijent2 = Pacijent("112", "Petra", "Jovanovic", "31839414")
+        pacijent3 = Pacijent("113", "Milos", "Markovic", "31525198")
         pacijent4 = Pacijent("114", "Zoran", "Petrovic", "82828282")
 
         self.__pacijenti.append(pacijent1)
@@ -127,4 +129,21 @@ class FakeData:
     @property
     def getPacijenti(self):
         return self.__pacijenti
+
+    @classmethod
+    def sacuvaj(self, podaci):
+        file = open("data_storage", "wb")
+        pickle.dump(podaci, file)
+        file.close()
+
+    def ucitaj(self):
+        try:
+            file = open("data_storage", "rb")
+            podaci = pickle.load(file)
+            file.close()
+        except FileNotFoundError:
+            return self.createMockPatients()
+
+        return podaci
+
 

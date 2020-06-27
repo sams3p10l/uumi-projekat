@@ -3,7 +3,7 @@ from tkinter import messagebox
 
 from PIL import ImageTk, Image
 
-from models import FakeData
+from data import Data
 
 
 class Gui(Tk):
@@ -154,7 +154,7 @@ class Gui(Tk):
 
 
 if __name__ == '__main__':
-    fakeData = FakeData()
-    patientData = fakeData.getPacijenti
+    data = Data()
+    patientData = data.ucitaj()
 
     gui = Gui(patientData)
