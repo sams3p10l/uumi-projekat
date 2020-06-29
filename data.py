@@ -115,9 +115,6 @@ class Data:
         self.__pacijenti = []
         self.__snimci = []
 
-        self.createMockPatients()
-        self.sacuvaj(self.__pacijenti)
-
     def createMockPatients(self):
         pacijent1 = Pacijent("111", "Petar", "Petrovic", "31839198")
         pacijent2 = Pacijent("112", "Petra", "Jovanovic", "31839414")
@@ -151,8 +148,14 @@ class Data:
 
     @classmethod
     def sacuvajPacijenta(cls, pacijent):
-        file = open(cls.__patientDataStorage, "a+")
-        pickle.dump(pacijent, file)
+        file = open(cls.__patientDataStorage, "r+b")
+        podaci = pickle.load(file)
+        file.close()
+
+        podaci.append(pacijent)
+
+        file = open(cls.__patientDataStorage, "wb")
+        pickle.dump(podaci, file)
         file.close()
 
     def ocistiPacijente(self):

@@ -164,12 +164,19 @@ class Gui(Tk):
             Label(window, text="Prezime: ").grid(row=2, sticky=E)
             Label(window, text="Datum rodjenja: ").grid(row=3, sticky=E)
 
-            self.__lbo_entry = Entry(window).grid(row=0, column=1, sticky=W)
-            self.__ime_entry = Entry(window).grid(row=1, column=1, sticky=W)
-            self.__prezime_entry = Entry(window).grid(row=2, column=1, sticky=W)
-            self.__datum_entry = Entry(window).grid(row=3, column=1, sticky=W)
+            self.__lbo_entry = Entry(window)
+            self.__ime_entry = Entry(window)
+            self.__prezime_entry = Entry(window)
+            self.__datum_entry = Entry(window)
 
-            Button(window, text="Dodaj", command=self.saveNewPatient).grid(row=5, columnspan=2)
+            btn = Button(window, text="Dodaj", command=self.saveNewPatient)
+            btn.grid(row=4, columnspan=2)
+
+            self.__lbo_entry.grid(row=0, column=1, sticky=W)
+            self.__ime_entry.grid(row=1, column=1, sticky=W)
+            self.__prezime_entry.grid(row=2, column=1, sticky=W)
+            self.__datum_entry.grid(row=3, column=1, sticky=W)
+
 
         def saveNewPatient(self):
             noviPacijent = Pacijent(self.__lbo_entry.get(), self.__ime_entry.get(), self.__prezime_entry.get(),
