@@ -18,21 +18,41 @@ class Gui(Tk):
         self.__prezime = ""
         self.__datumrodj = ""
 
+        self.__date_n_time = ""
+        self.__izvestaj = ""
+        self.__lekar = ""
+        self.__tip = ""
+        self.__snimak = ""
+
         self.geometry("640x480")
 
         self.__main_frame = Frame(self, relief=GROOVE, padx=10, pady=10)
+
         self.__patient_frame = Frame(self, height=480, width=640)
         self.__all_patients_frame = Frame(self.__patient_frame, borderwidth=2, relief="ridge")
         self.__patient_details_frame = Frame(self.__patient_frame, borderwidth=2)
         self.__patient_details_frame_container = Frame(self.__patient_details_frame, borderwidth=10)
+
+        self.__recordings_frame = Frame(self, height=480, width=640)
+        self.__all_recordings_frame = Frame(self.__recordings_frame_, borderwidth=2, relief="ridge")
+        self.__recordings_details_frame = Frame(self.__recordings_frame, borderwidth=2)
+        self.__recordings_details_frame_container = Frame(self.__recordings_details_frame, borderwidth=10)
 
         self.__lbo_label = Label(self.__patient_details_frame_container)
         self.__ime_label = Label(self.__patient_details_frame_container)
         self.__prezime_label = Label(self.__patient_details_frame_container)
         self.__datum_label = Label(self.__patient_details_frame_container)
 
+        self.__date_n_time = Label(self.__recordings_details_frame)
+        self.__izvestaj = Label(self.__recordings_details_frame_container)
+        self.__lekar = Label(self.__recordings_details_frame)
+        self.__tip = Label(self.__recordings_details_frame_container)
+        self.__snimak = Label(self.__recordings_details_frame_container)
+
+
         self.__listbox = Listbox(self.__all_patients_frame, activestyle="none")
         self.__search = Entry(self.__all_patients_frame)
+
 
         self.__main_frame.pack(fill=NONE, expand=TRUE)
 
