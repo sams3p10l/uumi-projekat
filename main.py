@@ -1,9 +1,13 @@
 from tkinter import *
 from tkinter import messagebox
-
+from datetime import datetime
 from PIL import ImageTk, Image
+from tkinter.ttk import Combobox
+from tkinter import filedialog
 
 from data import *
+
+
 
 
 class Gui(Tk):
@@ -16,13 +20,15 @@ class Gui(Tk):
         self.__lbo = ""
         self.__ime = ""
         self.__prezime = ""
-        self.__datumrodj = ""
+        self.__datumrodj = "%m-%d-%Y"
 
-        self.__date_n_time = ""
+        self.__pacijent = ""
+        self.__datum_i_vreme = " %m-%d-%Y %H:%M:%S "
         self.__izvestaj = ""
         self.__lekar = ""
         self.__tip = ""
         self.__snimak = ""
+
 
         self.geometry("640x480")
 
@@ -34,20 +40,21 @@ class Gui(Tk):
         self.__patient_details_frame_container = Frame(self.__patient_details_frame, borderwidth=10)
 
         self.__recordings_frame = Frame(self, height=480, width=640)
-        self.__all_recordings_frame = Frame(self.__recordings_frame_, borderwidth=2, relief="ridge")
+        self.__all_recordings_frame = Frame(self.__recordings_frame, borderwidth=2, relief="ridge")
         self.__recordings_details_frame = Frame(self.__recordings_frame, borderwidth=2)
         self.__recordings_details_frame_container = Frame(self.__recordings_details_frame, borderwidth=10)
 
         self.__lbo_label = Label(self.__patient_details_frame_container)
         self.__ime_label = Label(self.__patient_details_frame_container)
         self.__prezime_label = Label(self.__patient_details_frame_container)
-        self.__datum_label = Label(self.__patient_details_frame_container)
+        self.__datumrodj_label = Label(self.__patient_details_frame_container)
 
-        self.__date_n_time = Label(self.__recordings_details_frame)
-        self.__izvestaj = Label(self.__recordings_details_frame_container)
-        self.__lekar = Label(self.__recordings_details_frame)
-        self.__tip = Label(self.__recordings_details_frame_container)
-        self.__snimak = Label(self.__recordings_details_frame_container)
+        self.__pacijent_label = Label(self.__recordings_details_frame_container)
+        self.__date_n_time_label = Label(self.__recordings_details_frame)
+        self.__izvestaj_label = Label(self.__recordings_details_frame_container)
+        self.__lekar_label = Label(self.__recordings_details_frame)
+        self.__tip_label = Label(self.__recordings_details_frame_container)
+        self.__snimak_label = Label(self.__recordings_details_frame_container)
 
 
         self.__listbox = Listbox(self.__all_patients_frame, activestyle="none")
@@ -146,6 +153,34 @@ class Gui(Tk):
         self.__prezime_label["text"] = pacijent.prezime
         self.__datum_label["text"] = pacijent.datumrodj
 
+    def prikaziSnimke(self):
+        self.__main_frame.forget()
+
+        self.__recordings_frame.pack(fill=BOTH, expand=TRUE)
+        self.__all_recordings_frame.grid(sticky="nsew", row=0, column=0)
+        self.__recordings_details_frame_container.grid(sticky="nsew", row=0, column=1)
+
+        # kopirano sa SO nije mi bas jasno zasto ali samo je tako je uspelo da radi :)
+        self.__recordings_frame.grid_columnconfigure(0, weight=1, uniform="group1")
+        self.__recordings_frame.grid_columnconfigure(1, weight=1, uniform="group1")
+        self.__recordings_frame.grid_rowconfigure(0, weight=1)
+
+        self.__recordings_details_frame_container.pack(fill=NONE, expand=TRUE)
+
+        Label(self.__recordings_details_frame_container, text="Pacijent: ").grid(row=0, sticky=E)
+        Label(self.__recordings_details_frame_container, text="Datum i vrene: ").grid(row=1, sticky=E)
+        Label(self.__recordings_details_frame_container, text="Ime lekara: ").grid(row=2, sticky=E)
+        Label(self.__recordings_details_frame_container, text="Tip: ").grid(row=3, sticky=E)
+
+        self.__pacijent_label.grid(row=0, column=1, sticky=W)
+        self.__datum_i_vreme_label.grid(row=1, column=1, sticky=W)
+        self.__lekar_label.grid(row=2, column=1, sticky=W)
+        self.__tip_label.grid(row=3, column=1, sticky=W)
+
+
+
+
+
     def komanda_izlaz(self):
         odgovor = messagebox.askokcancel("Upozorenje", "Da li ste sigurni da želite da napustite aplikaciju?",
                                          icon="warning")
@@ -164,7 +199,7 @@ class Gui(Tk):
 
         snimakMenu = Menu()
         menu.add_cascade(label="Snimanja", menu=snimakMenu)
-        snimakMenu.add_command(label="Lista snimanja")
+        snimakMenu.add_command(label="Lista snimanja", command=self.prikaziSnimke)
         snimakMenu.add_command(label="Dodavanje snimanja")
         snimakMenu.add_command(label="Izmena ili brisanje snimanja")
 
@@ -202,6 +237,7 @@ class Gui(Tk):
             noviPacijent = Pacijent(self.__lbo_entry.get(), self.__ime_entry.get(), self.__prezime_entry.get(),
                                     self.__datum_entry.get())
             data.sacuvajPacijenta(noviPacijent)
+
 
 
 if __name__ == '__main__':

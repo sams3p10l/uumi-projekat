@@ -93,18 +93,41 @@ class Snimanje:
     def lekar(self, lekar):
         self.__lekar = lekar
 
-    def __init__(self, datum_i_vreme, izvestaj, lekar):
+    @property
+    def snimak(self):
+        return self.__snimak
+
+    @snimak.setter
+    def snimak(self, snimak):
+        self.__snimak = snimak
+
+    @property
+    def tip(self):
+        return self.__tip
+
+    @tip.setter
+    def tip(self, tip):
+        self.__tip = tip
+
+
+    def __init__(self, pacijent, datum_i_vreme, izvestaj, lekar, snimak, tip):
+        self.__pacijent = pacijent
         self.__datum_i_vreme = datum_i_vreme
         self.__izvestaj = izvestaj
         self.__lekar = lekar
+        self.__snimak = snimak
+        self.__tip = tip
 
     def __str__(self):
         format_linije = "{:>14}: {}"
         return "\n".join([
             "",
-            format_linije.format("LBO", self.__datum_i_vreme),
-            format_linije.format("Ime", self.__izvestaj),
-            format_linije.format("Prezime", self.__lekar)]
+            format_linije.format("Pacijent", self.__pacijent.LBO, self.__pacijent.ime, self.__pacijent.prezime, self.__pacijent.datumrodj),
+            format_linije.format("Datum i vreme", self.__datum_i_vreme),
+            format_linije.format("Izvestaj", self.__izvestaj),
+            format_linije.format("Lekar", self.__lekar),
+            format_linije.format("Snimak", self.__snimak),
+        ]
         )
 
 
