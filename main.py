@@ -66,7 +66,7 @@ class Gui(Tk):
     def pokreniEditProzor(self):
         index = self.__listbox.curselection()[0]
         pacijent = self.__data[index]
-        self.ChangePatient(master, pacijent)
+        self.ChangePatient(self.__main_frame, pacijent)
 
 
 
