@@ -1,13 +1,9 @@
 from tkinter import *
 from tkinter import messagebox
-from datetime import datetime
 from PIL import ImageTk, Image
-from tkinter.ttk import Combobox
-from tkinter import filedialog
-
 from data import *
 
-
+from datetime import datetime
 
 
 class Gui(Tk):
@@ -29,7 +25,6 @@ class Gui(Tk):
         self.__tip = ""
         self.__snimak = ""
 
-
         self.geometry("640x480")
 
         self.__main_frame = Frame(self, relief=GROOVE, padx=10, pady=10)
@@ -47,7 +42,7 @@ class Gui(Tk):
         self.__lbo_label = Label(self.__patient_details_frame_container)
         self.__ime_label = Label(self.__patient_details_frame_container)
         self.__prezime_label = Label(self.__patient_details_frame_container)
-        self.__datumrodj_label = Label(self.__patient_details_frame_container)
+        self.__datum_label = Label(self.__patient_details_frame_container)
 
         self.__pacijent_label = Label(self.__recordings_details_frame_container)
         self.__date_n_time_label = Label(self.__recordings_details_frame)
@@ -56,10 +51,8 @@ class Gui(Tk):
         self.__tip_label = Label(self.__recordings_details_frame_container)
         self.__snimak_label = Label(self.__recordings_details_frame_container)
 
-
         self.__listbox = Listbox(self.__all_patients_frame, activestyle="none")
         self.__search = Entry(self.__all_patients_frame)
-
 
         self.__main_frame.pack(fill=NONE, expand=TRUE)
 
@@ -177,10 +170,6 @@ class Gui(Tk):
         self.__lekar_label.grid(row=2, column=1, sticky=W)
         self.__tip_label.grid(row=3, column=1, sticky=W)
 
-
-
-
-
     def komanda_izlaz(self):
         odgovor = messagebox.askokcancel("Upozorenje", "Da li ste sigurni da želite da napustite aplikaciju?",
                                          icon="warning")
@@ -207,24 +196,27 @@ class Gui(Tk):
         menu.add_cascade(label="Izlaz", menu=izlazMenu)
         izlazMenu.add_command(label="Izlaz", command=self.komanda_izlaz)
 
+
     class NewPatientWindow:
         def __init__(self, master):
-            window = Toplevel(master)
+            self.window = Toplevel(master)
 
-            window.title("Dodaj pacijenta")
-            window.geometry("240x120")
+            self.parent = master
 
-            Label(window, text="LBO: ").grid(row=0, sticky=E)
-            Label(window, text="Ime: ").grid(row=1, sticky=E)
-            Label(window, text="Prezime: ").grid(row=2, sticky=E)
-            Label(window, text="Datum rodjenja: ").grid(row=3, sticky=E)
+            self.window.title("Dodaj pacijenta")
+            self.window.geometry("240x120")
 
-            self.__lbo_entry = Entry(window)
-            self.__ime_entry = Entry(window)
-            self.__prezime_entry = Entry(window)
-            self.__datum_entry = Entry(window)
+            Label(self.window, text="LBO: ").grid(row=0, sticky=E)
+            Label(self.window, text="Ime: ").grid(row=1, sticky=E)
+            Label(self.window, text="Prezime: ").grid(row=2, sticky=E)
+            Label(self.window, text="Datum rodjenja: ").grid(row=3, sticky=E)
 
-            btn = Button(window, text="Dodaj", command=self.saveNewPatient)
+            self.__lbo_entry = Entry(self.window)
+            self.__ime_entry = Entry(self.window)
+            self.__prezime_entry = Entry(self.window)
+            self.__datum_entry = Entry(self.window)
+
+            btn = Button(self.window, text="Dodaj", command=self.saveNewPatient)
             btn.grid(row=4, columnspan=2)
 
             self.__lbo_entry.grid(row=0, column=1, sticky=W)
@@ -232,12 +224,36 @@ class Gui(Tk):
             self.__prezime_entry.grid(row=2, column=1, sticky=W)
             self.__datum_entry.grid(row=3, column=1, sticky=W)
 
+            self.fillDate()
 
         def saveNewPatient(self):
-            noviPacijent = Pacijent(self.__lbo_entry.get(), self.__ime_entry.get(), self.__prezime_entry.get(),
-                                    self.__datum_entry.get())
-            data.sacuvajPacijenta(noviPacijent)
+            currentLbo = self.__lbo_entry.get()
+            currentIme = self.__ime_entry.get()
+            currentPrezime = self.__prezime_entry.get()
+            currentDatum = self.__datum_entry.get()
 
+            if len(currentLbo) != 11 or currentLbo.isdigit() is False:
+                messagebox.showinfo("Greska", "Lose unet LBO (treba da ima 11 karaktera)")
+                return
+            if len(currentIme) < 3:
+                messagebox.showinfo("Greska", "Neispravno uneto ime")
+                return
+            if len(currentPrezime) < 3:
+                messagebox.showinfo("Greska", "Neispravno uneto prezime")
+                return
+            if currentDatum == "":
+                messagebox.showinfo("Greska", "unesi datum")
+                return
+
+            noviPacijent = Pacijent(currentLbo, currentIme, currentPrezime, currentDatum)
+            data.sacuvajPacijenta(noviPacijent)
+            # newData = data.ucitaj()
+            # self.parent.listboxInsertData(newData, self.parent.__listbox)
+            self.window.destroy()
+
+        def fillDate(self):
+            self.__datum_entry.delete(0, END)
+            self.__datum_entry.insert(0, datetime.now().strftime("%d/%m/%Y"))
 
 
 if __name__ == '__main__':

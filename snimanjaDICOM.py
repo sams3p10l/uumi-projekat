@@ -5,6 +5,8 @@ import pydicom_PIL
 from pydicom_PIL import show_PIL
 import pydicom
 
+import numpy
+
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
@@ -25,9 +27,21 @@ class DICOMSnimci(Tk):
 
         return starost
 
-    # def postavi_stanje_startost_frame_a(self, stanje):
-    #     for podelement in self.__starost_frame.winfo_children():  # iteracija kroz podelemente widget-a
-    #         podelement["state"] = stanje
+    def postavi_stanje_startost_frame_a(self, stanje):
+        for podelement in self.__starost_frame.winfo_children():  # iteracija kroz podelemente widget-a
+            podelement["state"] = stanje
+
+    def postavi_datumrodj_frame_a(self, stanje):
+        self.__datumrodj_entry["state"] = stanje
+
+    def postavi_datumsnimka_frame_a(self, stanje):
+        self.__datumsnimka_entry["state"] = stanje
+
+    def postavi_ime_lekara_frame_a(self, stanje):
+        self.__ime_lekara_entry["state"] = stanje
+
+    def izvestaj_frame_a(self, stanje):
+        self.__izvestaj_entry["state"] = stanje
 
     def komanda_pacijent_postoji(self):
         stanje = NORMAL if self.__pacijent_postoji.get() else DISABLED
@@ -35,7 +49,7 @@ class DICOMSnimci(Tk):
 
     def komanda_tip_postoji(self):
         stanje = "readonly" if self.__tip_postoji.get() else DISABLED
-        self.__pol_combobox["state"] = stanje
+        self.__tip_combobox["state"] = stanje
 
     def komanda_starost_postoji(self):
         stanje = NORMAL if self.__starost_postoji.get() else DISABLED
@@ -155,7 +169,6 @@ class DICOMSnimci(Tk):
         except Exception as ex:  # desila se greška
             print()
             print(ex)
-            messagebox.showwarning("DICOM", "Greška pri učitavanju datoteke!")
 
         try:
             pil_slika = pydicom_PIL.get_PIL_image(self.__dataset)  # pokušaj dekompresije i čitanja slike iz dataset objekta
@@ -174,7 +187,7 @@ class DICOMSnimci(Tk):
                     sirina = int(odnos*sirina)  # manja dimenzija se smanjuje proporcionalno
                     visina = maks_dimenzija
             print("nove dimenzije:", sirina, ",", visina)
-            pil_slika = pil_slika.resize((sirina, visina), Image.LANCZOS)  # LANCZOS metoda je najbolja za smanjivanje slike
+            pil_slika = pil_slika.resize((sirina, visina), imagepil.LANCZOS)  # LANCZOS metoda je najbolja za smanjivanje slike
 
             slika = ImageTk.PhotoImage(pil_slika)  # PIL slika se mora prevesti u TkInter sliku (ImageTk)
             self.__slika_label["image"] = slika
@@ -182,27 +195,24 @@ class DICOMSnimci(Tk):
         except Exception as ex:  # desila se greška; reset-ovanje slike na podrazumevanu
             # PIL slika se mora prevesti u TkInter sliku (ImageTk)
             #slika = ImageTk.PhotoImage(Image.new('L', (200, 200))) # crna slika dimenzija 200x200 piksela
-            slika = ImageTk.PhotoImage(Image.open("DICOM-Logo.jpg"))  # bilo koja druga podrazumevana slika
+            slika = ImageTk.PhotoImage(imagepil.open("DICOM-Logo.jpg"))  # bilo koja druga podrazumevana slika
             self.__slika_label["image"] = slika  # labeli se dodeljuje slika
             self.__slika_label.image = slika  # referenca na TkInter sliku se mora sačuvati, inače nece biti prikazana!
 
             print()
             print(ex)
-            messagebox.showwarning("DICOM", "Greška pri otvaranju snimka!")
 
         self["cursor"] = ""
 
     def komanda_ocisti(self):
         self.__pacijent.set("")
-        self.__pol.set("US")
+        self.__tip.set("US")
         self.__starost.set(0)
         self.__starost_jedinica.set("Y")
         self.__datumrodj.set("")
         self.__datumsnimka.set("")
         self.__ime_lekara.set("")
         self.__izvestaj.set("")
-
-
 
     def komanda_sacuvaj(self):
         self["cursor"] = "wait"
@@ -248,18 +258,14 @@ class DICOMSnimci(Tk):
         if self.__izvestaj_postoji.get():
             self.__dataset.StudyDescription = self.__izvestaj.get()
         elif "Study Description" in self.__dataset:
+            del self.__dataset.StudyDescription
 
-
-
-         try:
+        try:
             self.__dataset.save_as(self.__staza_do_datoteke)  # čuvanje dataset-a; ako ne postoji, biće kreiran
-         except Exception as ex:
+        except Exception as ex:
             print()
             print(ex)
             messagebox.showerror("DICOM", "Greška pri čuvanju datoteke!")
-
-
-
 
         self["cursor"] = ""
 
@@ -326,6 +332,12 @@ class DICOMSnimci(Tk):
         unos_frame = Frame(self, borderwidth=2, relief="ridge", padx=10, pady=10)
         unos_frame.pack(side=RIGHT, fill=BOTH, expand=1)
 
+        self.__datumrodj_frame = Frame(unos_frame)
+        self.__starost_frame = Frame(unos_frame)
+        self.__datumsnimka_frame = Frame(unos_frame)
+        self.__ime_lekara_frame = Frame(unos_frame)
+        self.__izvestaj_frame = Frame(unos_frame)
+
         self.__pacijent_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__pacijent_postoji, command=self.komanda_pacijent_postoji, state=DISABLED)
         self.__tip_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__tip_postoji, command=self.komanda_tip_postoji, state=DISABLED)
         self.__starost_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__starost_postoji, command=self.komanda_starost_postoji, state=DISABLED)
@@ -333,21 +345,16 @@ class DICOMSnimci(Tk):
         self.__datumsnimka_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__datumsnimka_postoji, command=self.komanda_datumsnimka_postoji, state=DISABLED)
         self.__izvestaj_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__izvestaj_postoji,command=self.komanda_izvestaj_postoji, state=DISABLED)
         self.__ime_lekara_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__ime_lekara_postoji, command=self.komanda_ime_lekara_postoji, state=DISABLED)
+
         self.__ocisti_button = Button(unos_frame, text="Očisti", width=10, command=self.komanda_ocisti, state=DISABLED)
-
-
-        self.__starost_frame = Frame(unos_frame)
-        Spinbox(self.__starost_frame, from_=0, to=999, textvariable=self.__starost, state=DISABLED).pack(side=LEFT)
-        for vrednost, tekst in [("Y", "godina"), ("M", "meseci"), ("W", "nedelja"), ("D", "dana")]:
-            Radiobutton(self.__starost_frame, value=vrednost, text=tekst, variable=self.__starost_jedinica,
-                        state=DISABLED).pack(side=LEFT)
 
         self.__pacijent_entry = Entry(unos_frame, textvariable=self.__pacijent, state=DISABLED)
         self.__tip_combobox = Combobox(unos_frame, values=("US", "MR", "CT", "PX"), textvariable=self.__tip, state=DISABLED)
         self.__datumsnimka_entry = Entry(unos_frame, textvariable=self.__datumsnimka, state=DISABLED)
-        self.__dattumrodj_entry = Entry(unos_frame, textvariable=self.__datumrodj, state=DISABLED)
+        self.__datumrodj_entry = Entry(unos_frame, textvariable=self.__datumrodj, state=DISABLED)
         self.__ime_lekara_entry = Entry(unos_frame, textvariable=self.__ime_lekara, state=DISABLED)
         self.__izvestaj_entry = Entry(unos_frame, textvariable=self.__izvestaj, state=DISABLED)
+
         Spinbox(self.__starost_frame, from_=0, to=999, textvariable=self.__starost, state=DISABLED).pack(side=LEFT)
         for vrednost, tekst in [("Y", "godina"), ("M", "meseci"), ("W", "nedelja"), ("D", "dana")]:
          Radiobutton(self.__starost_frame, value=vrednost, text=tekst, variable=self.__starost_jedinica, state=DISABLED).pack(side=LEFT)
@@ -395,13 +402,13 @@ class DICOMSnimci(Tk):
         red += 1
         self.__starost_frame.grid(row=red, column=kolona, sticky=W)
         red += 1
-        self.__datumrodj_frame.grid(row=red, column=kolona, sticky=W)
+        self.__datumrodj_entry.grid(row=red, column=kolona, sticky=W)
         red += 1
-        self.__datumsnimka_frame.grid(row=red, column=kolona, sticky=W)
+        self.__datumsnimka_entry.grid(row=red, column=kolona, sticky=W)
         red += 1
-        self.__ime_lekara_frame.grid(row=red, column=kolona, sticky=W)
+        self.__ime_lekara_entry.grid(row=red, column=kolona, sticky=W)
         red += 1
-        self.__izvestaj_frame.grid(row=red, column=kolona, sticky=W)
+        self.__izvestaj_entry.grid(row=red, column=kolona, sticky=W)
         red += 1
         self.__sacuvaj_button.grid(row=red, column=kolona, sticky=W)
 
