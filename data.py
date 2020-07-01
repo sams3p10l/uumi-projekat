@@ -170,6 +170,18 @@ class Data:
         return podaci
 
     @classmethod
+    def obrisiPacijenta(cls, pacijent):
+        file = open(cls.__patientDataStorage, "r+b")
+        podaci = pickle.load(file)
+        file.close()
+
+        podaci.remove(pacijent)
+
+        file = open(cls.__patientDataStorage, "wb")
+        pickle.dump(podaci, file)
+        file.close()
+
+    @classmethod
     def sacuvajPacijenta(cls, pacijent):
         file = open(cls.__patientDataStorage, "r+b")
         podaci = pickle.load(file)

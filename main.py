@@ -63,6 +63,13 @@ class Gui(Tk):
 
         self.__main_frame.mainloop()
 
+    def pokreniEditProzor(self):
+        index = self.__listbox.curselection()[0]
+        pacijent = self.__data[index]
+        self.ChangePatient(master, pacijent)
+
+
+
     def prikaziPocetnu(self, master):
         panel = Label(master, image=self.__logo)
         panel.pack()
@@ -184,7 +191,7 @@ class Gui(Tk):
         menu.add_cascade(label="Pacijenti", menu=subMenu)
         subMenu.add_command(label="Prikaz pacijenata", command=self.prikaziPacijente)
         subMenu.add_command(label="Dodavanje pacijenata", command=lambda: self.NewPatientWindow(master))
-        subMenu.add_command(label="Izmena pacijenata")
+        subMenu.add_command(label="Izmena pacijenata", command=self.pokreniEditProzor)
 
         snimakMenu = Menu()
         menu.add_cascade(label="Snimanja", menu=snimakMenu)
@@ -255,6 +262,71 @@ class Gui(Tk):
             self.__datum_entry.delete(0, END)
             self.__datum_entry.insert(0, datetime.now().strftime("%d/%m/%Y"))
 
+    class ChangePatient:
+        def __init__(self, master, pacijent):
+            self.window = Toplevel(master)
+
+            self.parent = master
+            self.patient = pacijent
+
+            self.window.title("Izmeni pacijenta")
+            self.window.geometry("240x120")
+
+            Label(self.window, text="LBO: ").grid(row=0, sticky=E)
+            Label(self.window, text="Ime: ").grid(row=1, sticky=E)
+            Label(self.window, text="Prezime: ").grid(row=2, sticky=E)
+            Label(self.window, text="Datum rodjenja: ").grid(row=3, sticky=E)
+
+            self.__lbo_entry = Entry(self.window)
+            self.__ime_entry = Entry(self.window)
+            self.__prezime_entry = Entry(self.window)
+            self.__datum_entry = Entry(self.window)
+
+            btn = Button(self.window, text="Izmeni", command=self.editNewPatient)
+            btn.grid(row=4, columnspan=2)
+
+            self.__lbo_entry.grid(row=0, column=1, sticky=W)
+            self.__ime_entry.grid(row=1, column=1, sticky=W)
+            self.__prezime_entry.grid(row=2, column=1, sticky=W)
+            self.__datum_entry.grid(row=3, column=1, sticky=W)
+
+            self.fillPatient()
+
+    def editNewPatient(self):
+        currentLbo = self.__lbo_entry.get()
+        currentIme = self.__ime_entry.get()
+        currentPrezime = self.__prezime_entry.get()
+        currentDatum = self.__datum_entry.get()
+
+        if len(currentLbo) != 11 or currentLbo.isdigit() is False:
+            messagebox.showinfo("Greska", "Lose unet LBO (treba da ima 11 karaktera)")
+            return
+        if len(currentIme) < 3:
+            messagebox.showinfo("Greska", "Neispravno uneto ime")
+            return
+        if len(currentPrezime) < 3:
+            messagebox.showinfo("Greska", "Neispravno uneto prezime")
+            return
+        if currentDatum == "":
+            messagebox.showinfo("Greska", "unesi datum")
+            return
+        data.obrisiPacijenta()
+
+        noviPacijent = Pacijent(currentLbo, currentIme, currentPrezime, currentDatum)
+        data.sacuvajPacijenta(noviPacijent)
+        # newData = data.ucitaj()
+        # self.parent.listboxInsertData(newData, self.parent.__listbox)
+        self.window.destroy()
+
+    def fillPatient(self):
+        self.__lbo_entry.delete(0, END)
+        self.__lbo_entry.insert(0, self.patient.lbo)
+        self.__ime_entry.delete(0, END)
+        self.__ime_entry.insert(0, self.patient.ime)
+        self.__prezime_entry.delete(0, END)
+        self.__prezime_entry.insert(0, self.patient.prezime)
+        self.__datum_entry.delete(0, END)
+        self.__datum_entry.insert(0, self.patient.datumrodj)
 
 if __name__ == '__main__':
     data = Data()
