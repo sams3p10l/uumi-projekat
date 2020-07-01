@@ -190,7 +190,7 @@ class Gui(Tk):
         subMenu = Menu(menu)
         menu.add_cascade(label="Pacijenti", menu=subMenu)
         subMenu.add_command(label="Prikaz pacijenata", command=self.prikaziPacijente)
-        subMenu.add_command(label="Dodavanje pacijenata", command=lambda: self.NewPatientWindow(master))
+        subMenu.add_command(label="Dodavanje pacijenata", command=lambda: self.NewPatientWindow(master, self.__data))
         subMenu.add_command(label="Izmena pacijenata", command=self.pokreniEditProzor)
 
         snimakMenu = Menu()
@@ -205,10 +205,11 @@ class Gui(Tk):
 
 
     class NewPatientWindow:
-        def __init__(self, master):
+        def __init__(self, master, allPatients):
             self.window = Toplevel(master)
 
             self.parent = master
+            self.allPatients = allPatients
 
             self.window.title("Dodaj pacijenta")
             self.window.geometry("240x120")
@@ -252,6 +253,11 @@ class Gui(Tk):
                 messagebox.showinfo("Greska", "unesi datum")
                 return
 
+            for iterator in self.allPatients:
+                if iterator.LBO == currentLbo:
+                    messagebox.showinfo("Greska", "Korisnik sa ovim LBO vec postoji!")
+                    return
+
             noviPacijent = Pacijent(currentLbo, currentIme, currentPrezime, currentDatum)
             data.sacuvajPacijenta(noviPacijent)
             # newData = data.ucitaj()
@@ -292,41 +298,42 @@ class Gui(Tk):
 
             self.fillPatient()
 
-    def editNewPatient(self):
-        currentLbo = self.__lbo_entry.get()
-        currentIme = self.__ime_entry.get()
-        currentPrezime = self.__prezime_entry.get()
-        currentDatum = self.__datum_entry.get()
+        def editNewPatient(self):
+            currentLbo = self.__lbo_entry.get()
+            currentIme = self.__ime_entry.get()
+            currentPrezime = self.__prezime_entry.get()
+            currentDatum = self.__datum_entry.get()
 
-        if len(currentLbo) != 11 or currentLbo.isdigit() is False:
-            messagebox.showinfo("Greska", "Lose unet LBO (treba da ima 11 karaktera)")
-            return
-        if len(currentIme) < 3:
-            messagebox.showinfo("Greska", "Neispravno uneto ime")
-            return
-        if len(currentPrezime) < 3:
-            messagebox.showinfo("Greska", "Neispravno uneto prezime")
-            return
-        if currentDatum == "":
-            messagebox.showinfo("Greska", "unesi datum")
-            return
-        data.obrisiPacijenta()
+            if len(currentLbo) != 11 or currentLbo.isdigit() is False:
+                messagebox.showinfo("Greska", "Lose unet LBO (treba da ima 11 karaktera)")
+                return
+            if len(currentIme) < 3:
+                messagebox.showinfo("Greska", "Neispravno uneto ime")
+                return
+            if len(currentPrezime) < 3:
+                messagebox.showinfo("Greska", "Neispravno uneto prezime")
+                return
+            if currentDatum == "":
+                messagebox.showinfo("Greska", "unesi datum")
+                return
+            data.obrisiPacijenta(self.patient)
 
-        noviPacijent = Pacijent(currentLbo, currentIme, currentPrezime, currentDatum)
-        data.sacuvajPacijenta(noviPacijent)
-        # newData = data.ucitaj()
-        # self.parent.listboxInsertData(newData, self.parent.__listbox)
-        self.window.destroy()
+            noviPacijent = Pacijent(currentLbo, currentIme, currentPrezime, currentDatum)
+            data.sacuvajPacijenta(noviPacijent)
+            # newData = data.ucitaj()
+            # self.parent.listboxInsertData(newData, self.parent.__listbox)
+            self.window.destroy()
 
-    def fillPatient(self):
-        self.__lbo_entry.delete(0, END)
-        self.__lbo_entry.insert(0, self.patient.lbo)
-        self.__ime_entry.delete(0, END)
-        self.__ime_entry.insert(0, self.patient.ime)
-        self.__prezime_entry.delete(0, END)
-        self.__prezime_entry.insert(0, self.patient.prezime)
-        self.__datum_entry.delete(0, END)
-        self.__datum_entry.insert(0, self.patient.datumrodj)
+        def fillPatient(self):
+            self.__lbo_entry.delete(0, END)
+            self.__lbo_entry.insert(0, self.patient.LBO)
+            self.__ime_entry.delete(0, END)
+            self.__ime_entry.insert(0, self.patient.ime)
+            self.__prezime_entry.delete(0, END)
+            self.__prezime_entry.insert(0, self.patient.prezime)
+            self.__datum_entry.delete(0, END)
+            self.__datum_entry.insert(0, self.patient.datumrodj)
+
 
 if __name__ == '__main__':
     data = Data()
