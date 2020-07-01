@@ -13,7 +13,7 @@ from tkinter import messagebox
 from tkinter.ttk import Combobox
 
 
-class DICOMSnimci(Tk):
+class DICOMSnimci(Toplevel):
 
     def starost_validacija(self):
         try:
@@ -285,12 +285,7 @@ class DICOMSnimci(Tk):
         self.title(self.__staza_do_datoteke)
 
     def komanda_izlaz(self):
-        odgovor = messagebox.askokcancel("DICOM", "Da li ste sigurni da želite da napustite aplikaciju?", icon="warning")
-        if odgovor:
-            self.destroy()
-
-    def komanda_o_aplikaciji(self):
-        messagebox.showinfo("DICOM v1.0", "Program za prikaz i izmenu DICOM datoteka.")
+        self.destroy()
 
     def __init__(self) -> object:
         super().__init__()
@@ -424,7 +419,6 @@ class DICOMSnimci(Tk):
         meni_bar.add_cascade(label="Datoteka", menu=self.__datoteka_meni)
 
         pomoc_meni = Menu(meni_bar, tearoff=0)
-        pomoc_meni.add_command(label="O programu...", command=self.komanda_o_aplikaciji)
         meni_bar.add_cascade(label="Pomoć", menu=pomoc_meni)
 
         self.config(menu=meni_bar)

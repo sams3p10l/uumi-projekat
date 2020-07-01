@@ -175,7 +175,9 @@ class Data:
         podaci = pickle.load(file)
         file.close()
 
-        podaci.remove(pacijent)
+        for iterator in podaci:
+            if iterator.LBO == pacijent.LBO:
+                podaci.remove(iterator)
 
         file = open(cls.__patientDataStorage, "wb")
         pickle.dump(podaci, file)

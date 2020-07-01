@@ -4,7 +4,8 @@ from PIL import ImageTk, Image
 from data import *
 
 from datetime import datetime
-
+import snimanjaDICOM
+import os
 
 class Gui(Tk):
 
@@ -54,6 +55,9 @@ class Gui(Tk):
         self.__listbox = Listbox(self.__all_patients_frame, activestyle="none")
         self.__search = Entry(self.__all_patients_frame)
 
+        self.__rec_listbox = Listbox(self.__all_recordings_frame, activestyle="none")
+        self.__rec_search = Entry(self.__all_recordings_frame)
+
         self.__main_frame.pack(fill=NONE, expand=TRUE)
 
         self.__logo = ImageTk.PhotoImage(Image.open("klinika.png"))
@@ -67,8 +71,6 @@ class Gui(Tk):
         index = self.__listbox.curselection()[0]
         pacijent = self.__data[index]
         self.ChangePatient(self.__main_frame, pacijent)
-
-
 
     def prikaziPocetnu(self, master):
         panel = Label(master, image=self.__logo)
@@ -134,6 +136,9 @@ class Gui(Tk):
         pacijent = self.__data[indeks]
         self.popuniLabele(pacijent)
 
+    def recordingsListboxSelect(self, event=None):
+        pass
+
     def listboxInsertData(self, pacijenti, listbox):
         listbox.delete(0, END)
         for pacijent in pacijenti:
@@ -154,28 +159,7 @@ class Gui(Tk):
         self.__datum_label["text"] = pacijent.datumrodj
 
     def prikaziSnimke(self):
-        self.__main_frame.forget()
-
-        self.__recordings_frame.pack(fill=BOTH, expand=TRUE)
-        self.__all_recordings_frame.grid(sticky="nsew", row=0, column=0)
-        self.__recordings_details_frame_container.grid(sticky="nsew", row=0, column=1)
-
-        # kopirano sa SO nije mi bas jasno zasto ali samo je tako je uspelo da radi :)
-        self.__recordings_frame.grid_columnconfigure(0, weight=1, uniform="group1")
-        self.__recordings_frame.grid_columnconfigure(1, weight=1, uniform="group1")
-        self.__recordings_frame.grid_rowconfigure(0, weight=1)
-
-        self.__recordings_details_frame_container.pack(fill=NONE, expand=TRUE)
-
-        Label(self.__recordings_details_frame_container, text="Pacijent: ").grid(row=0, sticky=E)
-        Label(self.__recordings_details_frame_container, text="Datum i vrene: ").grid(row=1, sticky=E)
-        Label(self.__recordings_details_frame_container, text="Ime lekara: ").grid(row=2, sticky=E)
-        Label(self.__recordings_details_frame_container, text="Tip: ").grid(row=3, sticky=E)
-
-        self.__pacijent_label.grid(row=0, column=1, sticky=W)
-        self.__datum_i_vreme_label.grid(row=1, column=1, sticky=W)
-        self.__lekar_label.grid(row=2, column=1, sticky=W)
-        self.__tip_label.grid(row=3, column=1, sticky=W)
+        dicomWindow = snimanjaDICOM.DICOMSnimci()
 
     def komanda_izlaz(self):
         odgovor = messagebox.askokcancel("Upozorenje", "Da li ste sigurni da želite da napustite aplikaciju?",
@@ -190,25 +174,54 @@ class Gui(Tk):
         subMenu = Menu(menu)
         menu.add_cascade(label="Pacijenti", menu=subMenu)
         subMenu.add_command(label="Prikaz pacijenata", command=self.prikaziPacijente)
-        subMenu.add_command(label="Dodavanje pacijenata", command=lambda: self.NewPatientWindow(master))
+        subMenu.add_command(label="Dodavanje pacijenata", command=lambda: self.NewPatientWindow(master, self.__data))
         subMenu.add_command(label="Izmena pacijenata", command=self.pokreniEditProzor)
 
         snimakMenu = Menu()
         menu.add_cascade(label="Snimanja", menu=snimakMenu)
-        snimakMenu.add_command(label="Lista snimanja", command=self.prikaziSnimke)
-        snimakMenu.add_command(label="Dodavanje snimanja")
+        snimakMenu.add_command(label="Lista snimanja", command=self.otvoriListuSnimanja)
+        snimakMenu.add_command(label="Dodavanje snimanja", command=self.prikaziSnimke)
         snimakMenu.add_command(label="Izmena ili brisanje snimanja")
 
         izlazMenu = Menu()
         menu.add_cascade(label="Izlaz", menu=izlazMenu)
         izlazMenu.add_command(label="Izlaz", command=self.komanda_izlaz)
 
+    def otvoriListuSnimanja(self):
+        self.__main_frame.forget()
+
+        self.__recordings_frame.pack(fill=BOTH, expand=TRUE)
+        self.__all_recordings_frame.grid(sticky="nsew", row=0, column=0)
+        self.__recordings_details_frame.grid(sticky="nsew", row=0, column=1)
+
+        # kopirano sa SO
+        self.__recordings_frame.grid_columnconfigure(0, weight=1, uniform="group1")
+        self.__recordings_frame.grid_columnconfigure(1, weight=1, uniform="group1")
+        self.__recordings_frame.grid_rowconfigure(0, weight=1)
+
+        self.__recordings_details_frame_container.pack(fill=NONE, expand=TRUE)
+
+        Label(self.__all_recordings_frame, text="Pretraga").pack()
+        self.__rec_search.pack(fill=X)
+
+        self.__rec_listbox.bind("<<ListboxSelect>>", self.recordingsListboxSelect)
+        self.snimciListboxInsertData(os.listdir("DICOM samples"), self.__rec_listbox)
+
+        self.__rec_listbox.pack(fill=BOTH, expand=TRUE)
+
+    def snimciListboxInsertData(self, snimci, listbox):
+        listbox.delete(0, END)
+        for snimak in snimci:
+            listbox.insert(END, str(snimak))
+
+        self.ocistiLabele()
 
     class NewPatientWindow:
-        def __init__(self, master):
+        def __init__(self, master, allPatients):
             self.window = Toplevel(master)
 
             self.parent = master
+            self.allPatients = allPatients
 
             self.window.title("Dodaj pacijenta")
             self.window.geometry("240x120")
@@ -252,6 +265,11 @@ class Gui(Tk):
                 messagebox.showinfo("Greska", "unesi datum")
                 return
 
+            for iterator in self.allPatients:
+                if iterator.LBO == currentLbo:
+                    messagebox.showinfo("Greska", "Korisnik sa ovim LBO vec postoji!")
+                    return
+
             noviPacijent = Pacijent(currentLbo, currentIme, currentPrezime, currentDatum)
             data.sacuvajPacijenta(noviPacijent)
             # newData = data.ucitaj()
@@ -292,41 +310,44 @@ class Gui(Tk):
 
             self.fillPatient()
 
-    def editNewPatient(self):
-        currentLbo = self.__lbo_entry.get()
-        currentIme = self.__ime_entry.get()
-        currentPrezime = self.__prezime_entry.get()
-        currentDatum = self.__datum_entry.get()
+        def editNewPatient(self):
+            currentLbo = self.__lbo_entry.get()
+            currentIme = self.__ime_entry.get()
+            currentPrezime = self.__prezime_entry.get()
+            currentDatum = self.__datum_entry.get()
 
-        if len(currentLbo) != 11 or currentLbo.isdigit() is False:
-            messagebox.showinfo("Greska", "Lose unet LBO (treba da ima 11 karaktera)")
-            return
-        if len(currentIme) < 3:
-            messagebox.showinfo("Greska", "Neispravno uneto ime")
-            return
-        if len(currentPrezime) < 3:
-            messagebox.showinfo("Greska", "Neispravno uneto prezime")
-            return
-        if currentDatum == "":
-            messagebox.showinfo("Greska", "unesi datum")
-            return
-        data.obrisiPacijenta()
+            if len(currentLbo) != 11 or currentLbo.isdigit() is False:
+                messagebox.showinfo("Greska", "Lose unet LBO (treba da ima 11 karaktera)")
+                return
+            if len(currentIme) < 3:
+                messagebox.showinfo("Greska", "Neispravno uneto ime")
+                return
+            if len(currentPrezime) < 3:
+                messagebox.showinfo("Greska", "Neispravno uneto prezime")
+                return
+            if currentDatum == "":
+                messagebox.showinfo("Greska", "unesi datum")
+                return
+            data.obrisiPacijenta(self.patient)
 
-        noviPacijent = Pacijent(currentLbo, currentIme, currentPrezime, currentDatum)
-        data.sacuvajPacijenta(noviPacijent)
-        # newData = data.ucitaj()
-        # self.parent.listboxInsertData(newData, self.parent.__listbox)
-        self.window.destroy()
+            noviPacijent = Pacijent(currentLbo, currentIme, currentPrezime, currentDatum)
+            data.sacuvajPacijenta(noviPacijent)
+            # newData = data.ucitaj()
+            # self.parent.listboxInsertData(newData, self.parent.__listbox)
+            self.window.destroy()
 
-    def fillPatient(self):
-        self.__lbo_entry.delete(0, END)
-        self.__lbo_entry.insert(0, self.patient.lbo)
-        self.__ime_entry.delete(0, END)
-        self.__ime_entry.insert(0, self.patient.ime)
-        self.__prezime_entry.delete(0, END)
-        self.__prezime_entry.insert(0, self.patient.prezime)
-        self.__datum_entry.delete(0, END)
-        self.__datum_entry.insert(0, self.patient.datumrodj)
+        def fillPatient(self):
+            self.__lbo_entry.delete(0, END)
+            self.__lbo_entry.insert(0, self.patient.LBO)
+            self.__ime_entry.delete(0, END)
+            self.__ime_entry.insert(0, self.patient.ime)
+            self.__prezime_entry.delete(0, END)
+            self.__prezime_entry.insert(0, self.patient.prezime)
+            self.__datum_entry.delete(0, END)
+            self.__datum_entry.insert(0, self.patient.datumrodj)
+
+            self.__lbo_entry["state"] = DISABLED
+
 
 if __name__ == '__main__':
     data = Data()
