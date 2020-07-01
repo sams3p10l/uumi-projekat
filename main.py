@@ -68,7 +68,11 @@ class Gui(Tk):
         self.__main_frame.mainloop()
 
     def pokreniEditProzor(self):
-        index = self.__listbox.curselection()[0]
+        try:
+            index = self.__listbox.curselection()[0]
+        except IndexError:
+            return
+
         pacijent = self.__data[index]
         self.ChangePatient(self.__main_frame, pacijent)
 
@@ -167,6 +171,15 @@ class Gui(Tk):
         if odgovor:
             self.destroy()
 
+    def obrisiPacijenta(self):
+        try:
+            index = self.__listbox.curselection()[0]
+        except IndexError:
+            return
+
+        pacijent = self.__data[index]
+        data.obrisiPacijenta(pacijent)
+
     def podesiMeni(self, master):
         menu = Menu(self)
         self.config(menu=menu)
@@ -175,7 +188,8 @@ class Gui(Tk):
         menu.add_cascade(label="Pacijenti", menu=subMenu)
         subMenu.add_command(label="Prikaz pacijenata", command=self.prikaziPacijente)
         subMenu.add_command(label="Dodavanje pacijenata", command=lambda: self.NewPatientWindow(master, self.__data))
-        subMenu.add_command(label="Izmena pacijenata", command=self.pokreniEditProzor)
+        subMenu.add_command(label="Izmena pacijenta", command=self.pokreniEditProzor)
+        subMenu.add_command(label="Obrisi pacijenta", command=self.obrisiPacijenta)
 
         snimakMenu = Menu()
         menu.add_cascade(label="Snimanja", menu=snimakMenu)
