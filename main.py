@@ -69,6 +69,7 @@ class Gui(Tk):
         self.__chosenPatient = StringVar()
 
         self.__allDicoms = []
+        self.__snimci = []
 
         self.podesiMeni(self.__main_frame)
         self.prikaziPocetnu(self.__main_frame)
@@ -183,10 +184,10 @@ class Gui(Tk):
         except IndexError:
             return
 
-        dicomWindow = snimanjaDICOM.DICOMSnimci(self.__allDicoms[index], "open")
+        dicomWindow = snimanjaDICOM.DICOMSnimci(self.__allDicoms[index], self.__snimci[index], "open")
 
     def dodajNoviSnimak(self):
-        dicomWindow = snimanjaDICOM.DICOMSnimci(None, "add")
+        dicomWindow = snimanjaDICOM.DICOMSnimci(None, None, "add")
 
     def izmeniSnimak(self):
         try:
@@ -194,7 +195,7 @@ class Gui(Tk):
         except IndexError:
             return
 
-        dicomWindow = snimanjaDICOM.DICOMSnimci(self.__allDicoms[index], "edit")
+        dicomWindow = snimanjaDICOM.DICOMSnimci(self.__allDicoms[index], self.__snimci[index], "edit")
 
     def komanda_izlaz(self):
         odgovor = messagebox.askokcancel("Upozorenje", "Da li ste sigurni da želite da napustite aplikaciju?",
@@ -274,10 +275,10 @@ class Gui(Tk):
         self.__rec_listbox.pack(fill=BOTH, expand=TRUE)
 
     def snimciListboxInsertData(self):
-        snimci = os.listdir("DICOM samples")
+        self.__snimci = os.listdir("DICOM samples")
 
         self.__rec_listbox.delete(0, END)
-        for snimak in snimci:
+        for snimak in self.__snimci:
             read_dicom = pydicom.dcmread("DICOM samples/" + snimak, force=True)
             self.__allDicoms.append(read_dicom)
 

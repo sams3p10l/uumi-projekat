@@ -386,16 +386,15 @@ class DICOMSnimci(Toplevel):
         self.__staza_do_datoteke = staza_do_datoteke
         self.komanda_sacuvaj()
 
-        self.title(self.__staza_do_datoteke)
-
     def komanda_izlaz(self):
         self.destroy()
 
-    def __init__(self, readDicom, command) -> object:
+    def __init__(self, readDicom, fileName, command) -> object:
         super().__init__()
 
         self.__read_dicom = readDicom
         self.__command = command
+        self.__staza_do_datoteke = "DICOM samples/" + fileName
 
         self.__pacijent_postoji = BooleanVar(self, False)
         self.__pacijent = StringVar(self)
