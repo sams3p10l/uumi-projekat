@@ -1,9 +1,12 @@
 from tkinter import *
 from tkinter import messagebox
+from tkinter import ttk
+
 from PIL import ImageTk, Image
 from data import *
 
 from datetime import datetime
+import pydicom
 import snimanjaDICOM
 import os
 
@@ -62,6 +65,11 @@ class Gui(Tk):
 
         self.__logo = ImageTk.PhotoImage(Image.open("klinika.png"))
 
+        self.__chosenType = StringVar()
+        self.__chosenPatient = StringVar()
+
+        self.__allDicoms = []
+
         self.podesiMeni(self.__main_frame)
         self.prikaziPocetnu(self.__main_frame)
 
@@ -82,6 +90,7 @@ class Gui(Tk):
 
     def prikaziPacijente(self):
         self.__main_frame.forget()
+        self.__recordings_frame.forget()
 
         self.__patient_frame.pack(fill=BOTH, expand=TRUE)
         self.__all_patients_frame.grid(sticky="nsew", row=0, column=0)
@@ -143,6 +152,12 @@ class Gui(Tk):
     def recordingsListboxSelect(self, event=None):
         pass
 
+    def recFilterPatientSelected(self, event=None):
+        pass
+
+    def recFilterTypeSelected(self, event=None):
+        pass
+
     def listboxInsertData(self, pacijenti, listbox):
         listbox.delete(0, END)
         for pacijent in pacijenti:
@@ -162,8 +177,24 @@ class Gui(Tk):
         self.__prezime_label["text"] = pacijent.prezime
         self.__datum_label["text"] = pacijent.datumrodj
 
-    def prikaziSnimke(self):
-        dicomWindow = snimanjaDICOM.DICOMSnimci()
+    def prikaziSnimak(self):
+        try:
+            index = self.__rec_listbox.curselection()[0]
+        except IndexError:
+            return
+
+        dicomWindow = snimanjaDICOM.DICOMSnimci(self.__allDicoms[index], "open")
+
+    def dodajNoviSnimak(self):
+        dicomWindow = snimanjaDICOM.DICOMSnimci(None, "add")
+
+    def izmeniSnimak(self):
+        try:
+            index = self.__rec_listbox.curselection()[0]
+        except IndexError:
+            return
+
+        dicomWindow = snimanjaDICOM.DICOMSnimci(self.__allDicoms[index], "edit")
 
     def komanda_izlaz(self):
         odgovor = messagebox.askokcancel("Upozorenje", "Da li ste sigurni da želite da napustite aplikaciju?",
@@ -194,8 +225,9 @@ class Gui(Tk):
         snimakMenu = Menu()
         menu.add_cascade(label="Snimanja", menu=snimakMenu)
         snimakMenu.add_command(label="Lista snimanja", command=self.otvoriListuSnimanja)
-        snimakMenu.add_command(label="Dodavanje snimanja", command=self.prikaziSnimke)
-        snimakMenu.add_command(label="Izmena ili brisanje snimanja")
+        snimakMenu.add_command(label="Otvori snimanje", command=self.prikaziSnimak)
+        snimakMenu.add_command(label="Dodavanje snimanja", command=self.dodajNoviSnimak)
+        snimakMenu.add_command(label="Izmena ili brisanje snimanja", command=self.izmeniSnimak)
 
         izlazMenu = Menu()
         menu.add_cascade(label="Izlaz", menu=izlazMenu)
@@ -203,6 +235,7 @@ class Gui(Tk):
 
     def otvoriListuSnimanja(self):
         self.__main_frame.forget()
+        self.__patient_frame.forget()
 
         self.__recordings_frame.pack(fill=BOTH, expand=TRUE)
         self.__all_recordings_frame.grid(sticky="nsew", row=0, column=0)
@@ -215,20 +248,47 @@ class Gui(Tk):
 
         self.__recordings_details_frame_container.pack(fill=NONE, expand=TRUE)
 
-        Label(self.__all_recordings_frame, text="Pretraga").pack()
-        self.__rec_search.pack(fill=X)
+        comboData = ["Svi pacijenti"]
+
+        for entry in self.__data:
+            comboData.append(entry.ime + " " + entry.prezime)
+
+        Label(self.__recordings_details_frame_container, text="Izaberi pacijenta", pady=10).pack()
+
+        recCombobox = ttk.Combobox(self.__recordings_details_frame_container, values=comboData, textvariable=self.__chosenPatient)
+        recCombobox.bind("<<ComboboxSelected>>", self.recFilterPatientSelected)
+        recCombobox.current(0)
+        recCombobox.pack()
+
+        comboTypes = ["Svi tipovi", "Magnetic Resonance(MR)", "Computed Topograph(CT)", "Ultrasound(US)", "Panoramic X-Ray(PX)"]
+        Label(self.__recordings_details_frame_container, text="Izaberi tip snimka", pady=10).pack()
+
+        recTypeCombobox = ttk.Combobox(self.__recordings_details_frame_container, values=comboTypes, textvariable=self.__chosenType)
+        recCombobox.bind("<<ComboboxSelected>>", self.recFilterTypeSelected)
+        recTypeCombobox.current(0)
+        recTypeCombobox.pack()
 
         self.__rec_listbox.bind("<<ListboxSelect>>", self.recordingsListboxSelect)
-        self.snimciListboxInsertData(os.listdir("DICOM samples"), self.__rec_listbox)
+        self.snimciListboxInsertData()
 
         self.__rec_listbox.pack(fill=BOTH, expand=TRUE)
 
-    def snimciListboxInsertData(self, snimci, listbox):
-        listbox.delete(0, END)
-        for snimak in snimci:
-            listbox.insert(END, str(snimak))
+    def snimciListboxInsertData(self):
+        snimci = os.listdir("DICOM samples")
 
-        self.ocistiLabele()
+        self.__rec_listbox.delete(0, END)
+        for snimak in snimci:
+            read_dicom = pydicom.dcmread("DICOM samples/" + snimak, force=True)
+            self.__allDicoms.append(read_dicom)
+
+            ret_string = str(snimak)
+            if "StudyDate" in read_dicom:
+                ret_string = ret_string + " - " + read_dicom.StudyDate
+
+            if "StudyTime" in read_dicom:
+                ret_string = ret_string + " - " + read_dicom.StudyTime
+
+            self.__rec_listbox.insert(END, ret_string)
 
     class NewPatientWindow:
         def __init__(self, master, allPatients):

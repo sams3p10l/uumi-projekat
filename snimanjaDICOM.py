@@ -80,26 +80,14 @@ class DICOMSnimci(Toplevel):
         self.komanda_ime_lekara_postoji()
         self.komanda_izvestaj_postoji()
 
-
-    def komanda_otvori(self):
+    def komanda_otvori_i_edituj(self):
         try:
-           #kopirano
-            staza_do_datoteke = filedialog.askopenfilename(
-                initialdir="./DICOM samples",
-                title="Otvaranje",
-                filetypes=[("All files", "*.*"), ("DICOM files", "*.dcm")])
-            if staza_do_datoteke == "":
-                return
-
-
             self["cursor"] = "wait"
             self.update()
 
-            self.__staza_do_datoteke = staza_do_datoteke  # pamćenje staze do datoteke radi čuvanja
-            self.__dataset = pydicom.dcmread(self.__staza_do_datoteke, force=True)  # otvaranje DICOM datoteke; force parametar obezbeđuje čitanje nepotpunih datoteka
+            self.__dataset = self.__read_dicom  # otvaranje DICOM datoteke; force parametar obezbeđuje čitanje nepotpunih datoteka
             print(self.__dataset)
 
-            self.title(self.__staza_do_datoteke)
             # omogućavanje interfejsa za izmenu i čuvanje
             self.__pacijent_postoji_checkbutton["state"] = NORMAL
             self.__tip_postoji_checkbutton["state"] = NORMAL
@@ -111,9 +99,8 @@ class DICOMSnimci(Toplevel):
 
             self.__ocisti_button["state"] = NORMAL
             self.__sacuvaj_button["state"] = NORMAL
-            self.__datoteka_meni.entryconfig(2, state=NORMAL)
-            self.__datoteka_meni.entryconfig(3, state=NORMAL)
-
+            self.__datoteka_meni.entryconfig(0, state=NORMAL)
+            self.__datoteka_meni.entryconfig(1, state=NORMAL)
 
             if "PatientName" in self.__dataset:
                 self.__pacijent.set(self.__dataset.PatientName)
@@ -147,7 +134,7 @@ class DICOMSnimci(Toplevel):
                 self.__ime_lekara_postoji.set(False)
 
             if "Patient’s Birth Date" in self.__dataset:
-                self.__darumrodj.set(self.__dataset.PatientBirthDate)
+                self.__datumrodj.set(self.__dataset.PatientBirthDate)
                 self.__datumrodj_postoji.set(True)
             else:
                 self.__datumrodj_postoji.set(False)
@@ -159,13 +146,130 @@ class DICOMSnimci(Toplevel):
                 self.__datumsnimka_postoji.set(False)
 
             if "Study Description" in self.__dataset:
-              self.__izvestaj.set(self.__dataset.StudyDescription)
-              self.__izvestaj_postoji.set(True)
+                self.__izvestaj.set(self.__dataset.StudyDescription)
+                self.__izvestaj_postoji.set(True)
             else:
-              self.__izvestaj_postoji.set(False)
-
+                self.__izvestaj_postoji.set(False)
 
             self.azuriraj_stanja()  # omogućavanje polja za izmenu na osnovu pročitanih podataka
+        except Exception as ex:  # desila se greška
+            print()
+            print(ex)
+
+        try:
+            pil_slika = pydicom_PIL.get_PIL_image(self.__dataset)  # pokušaj dekompresije i čitanja slike iz dataset objekta
+            sirina = pil_slika.width
+            visina = pil_slika.height
+            print("originalne dimenzije:", sirina, ",", visina)
+
+            maks_dimenzija = 900
+            if sirina > maks_dimenzija or visina > maks_dimenzija:
+                if sirina > visina:  # smanjiti sliku po većoj od 2 dimenzije
+                    odnos = maks_dimenzija/sirina
+                    sirina = maks_dimenzija
+                    visina = int(odnos*visina)  # manja dimenzija se smanjuje proporcionalno
+                else:
+                    odnos = maks_dimenzija/visina
+                    sirina = int(odnos*sirina)  # manja dimenzija se smanjuje proporcionalno
+                    visina = maks_dimenzija
+            print("nove dimenzije:", sirina, ",", visina)
+            pil_slika = pil_slika.resize((sirina, visina), imagepil.LANCZOS)  # LANCZOS metoda je najbolja za smanjivanje slike
+
+            slika = ImageTk.PhotoImage(pil_slika)  # PIL slika se mora prevesti u TkInter sliku (ImageTk)
+            self.__slika_label["image"] = slika
+            self.__slika_label.image = slika
+        except Exception as ex:  # desila se greška; reset-ovanje slike na podrazumevanu
+            # PIL slika se mora prevesti u TkInter sliku (ImageTk)
+            #slika = ImageTk.PhotoImage(Image.new('L', (200, 200))) # crna slika dimenzija 200x200 piksela
+            slika = ImageTk.PhotoImage(imagepil.open("DICOM-Logo.jpg"))  # bilo koja druga podrazumevana slika
+            self.__slika_label["image"] = slika  # labeli se dodeljuje slika
+            self.__slika_label.image = slika  # referenca na TkInter sliku se mora sačuvati, inače nece biti prikazana!
+
+            print()
+            print(ex)
+
+        self["cursor"] = ""
+
+    def komanda_dodaj(self):
+        self.__pacijent_postoji_checkbutton["state"] = NORMAL
+        self.__tip_postoji_checkbutton["state"] = NORMAL
+        self.__starost_postoji_checkbutton["state"] = NORMAL
+        self.__datumrodj_postoji_checkbutton["state"] = NORMAL
+        self.__datumsnimka_postoji_checkbutton["state"] = NORMAL
+        self.__ime_lekara_postoji_checkbutton["state"] = NORMAL
+        self.__izvestaj_postoji_checkbutton["state"] = NORMAL
+
+        self.__ocisti_button["state"] = NORMAL
+        self.__sacuvaj_button["state"] = NORMAL
+        self.__datoteka_meni.entryconfig(0, state=DISABLED)
+        self.__datoteka_meni.entryconfig(1, state=NORMAL)
+
+        slika = ImageTk.PhotoImage(imagepil.open("DICOM-Logo.jpg"))  # bilo koja druga podrazumevana slika
+        self.__slika_label["image"] = slika  # labeli se dodeljuje slika
+        self.__slika_label.image = slika  # referenca na TkInter sliku se mora sačuvati, inače nece biti prikazana!
+
+    def komanda_otvori(self):
+        try:
+            self["cursor"] = "wait"
+            self.update()
+
+            self.__dataset = self.__read_dicom
+            print(self.__dataset)
+
+            self.__ocisti_button["state"] = DISABLED
+            self.__sacuvaj_button["state"] = DISABLED
+            self.__datoteka_meni.entryconfig(0, state=DISABLED)
+            self.__datoteka_meni.entryconfig(1, state=DISABLED)
+
+            if "PatientName" in self.__dataset:
+                self.__pacijent.set(self.__dataset.PatientName)
+                self.__pacijent_postoji.set(True)
+            else:
+                self.__pacijent_postoji.set(False)
+
+            if "Modality" in self.__dataset:
+                for vrednost, tekst in [("CT", "Computed Tomography"), ("US", "Ultrasound]"), ("MR", "Magnetic Resonance"), ("PX", "Panoramic X-Ray")]:
+                    if vrednost == self.__dataset.Modality:
+                        self.__tip.set(tekst)
+                        break
+                self.__tip_postoji.set(True)
+            else:
+                self.__tip_postoji.set(False)
+
+            if "PatientAge" in self.__dataset:
+                try:
+                    self.__starost.set(int(self.__dataset.PatientAge[:-1]))
+                    self.__starost_jedinica.set(self.__dataset.PatientAge[-1])
+                    self.__starost_postoji.set(True)
+                except ValueError:
+                    pass
+            else:
+                self.__starost_postoji.set(False)
+
+            if "Referring Physician’s Name" in self.__dataset:  # da li podatak postoji u dataset-u?
+                self.__ime_lekara.set(self.__dataset.ReferringPhysicianName)  # vrednost podatka
+                self.__ime_lekara_postoji.set(True)
+            else:
+                self.__ime_lekara_postoji.set(False)
+
+            if "Patient’s Birth Date" in self.__dataset:
+                self.__datumrodj.set(self.__dataset.PatientBirthDate)
+                self.__datumrodj_postoji.set(True)
+            else:
+                self.__datumrodj_postoji.set(False)
+
+            if "Study Date" in self.__dataset:
+                self.__datumsnimka.set(self.__dataset.StudyDate)
+                self.__datumsnimka_postoji.set(True)
+            else:
+                self.__datumsnimka_postoji.set(False)
+
+            if "Study Description" in self.__dataset:
+                self.__izvestaj.set(self.__dataset.StudyDescription)
+                self.__izvestaj_postoji.set(True)
+            else:
+                self.__izvestaj_postoji.set(False)
+
         except Exception as ex:  # desila se greška
             print()
             print(ex)
@@ -287,12 +391,11 @@ class DICOMSnimci(Toplevel):
     def komanda_izlaz(self):
         self.destroy()
 
-    def __init__(self) -> object:
+    def __init__(self, readDicom, command) -> object:
         super().__init__()
 
-        # na početku nije učitana nijedna datoteka
-        self.__staza_do_datoteke = ""
-        self.__dataset = None
+        self.__read_dicom = readDicom
+        self.__command = command
 
         self.__pacijent_postoji = BooleanVar(self, False)
         self.__pacijent = StringVar(self)
@@ -342,6 +445,7 @@ class DICOMSnimci(Toplevel):
         self.__ime_lekara_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__ime_lekara_postoji, command=self.komanda_ime_lekara_postoji, state=DISABLED)
 
         self.__ocisti_button = Button(unos_frame, text="Očisti", width=10, command=self.komanda_ocisti, state=DISABLED)
+        self.__sacuvaj_button = Button(unos_frame, text="Sačuvaj", width=10, command=self.komanda_sacuvaj, state=DISABLED)
 
         self.__pacijent_entry = Entry(unos_frame, textvariable=self.__pacijent, state=DISABLED)
         self.__tip_combobox = Combobox(unos_frame, values=("US", "MR", "CT", "PX"), textvariable=self.__tip, state=DISABLED)
@@ -352,9 +456,7 @@ class DICOMSnimci(Toplevel):
 
         Spinbox(self.__starost_frame, from_=0, to=999, textvariable=self.__starost, state=DISABLED).pack(side=LEFT)
         for vrednost, tekst in [("Y", "godina"), ("M", "meseci"), ("W", "nedelja"), ("D", "dana")]:
-         Radiobutton(self.__starost_frame, value=vrednost, text=tekst, variable=self.__starost_jedinica, state=DISABLED).pack(side=LEFT)
-
-        self.__sacuvaj_button = Button(unos_frame, text="Sačuvaj", width=10, command=self.komanda_sacuvaj, state=DISABLED)
+            Radiobutton(self.__starost_frame, value=vrednost, text=tekst, variable=self.__starost_jedinica, state=DISABLED).pack(side=LEFT)
 
         red = 1
         self.__pacijent_postoji_checkbutton.grid(row=red)
@@ -410,8 +512,6 @@ class DICOMSnimci(Toplevel):
         meni_bar = Menu(self)
 
         self.__datoteka_meni = Menu(meni_bar, tearoff=0)
-        self.__datoteka_meni.add_command(label="Otvori...", command=self.komanda_otvori)
-        self.__datoteka_meni.add_separator()
         self.__datoteka_meni.add_command(label="Sačuvaj", command=self.komanda_sacuvaj, state=DISABLED)
         self.__datoteka_meni.add_command(label="Sačuvaj kao...", command=self.komanda_sacuvaj_kao, state=DISABLED)
         self.__datoteka_meni.add_separator()
@@ -431,17 +531,13 @@ class DICOMSnimci(Toplevel):
         visina = self.winfo_height()
         self.minsize(sirina, visina)
 
-
         # programski izazvani događaji
         self.focus_force()
 
+        if self.__command == "open":
+            self.komanda_otvori()
+        elif self.__command == "edit":
+            self.komanda_otvori_i_edituj()
+        elif self.__command == "add":
+            self.komanda_dodaj()
 
-def main():
-    # ds = pydicom.read_file("DICOM samples/0002.DCM")
-    # show_PIL(ds)
-    dicom_prozor = DICOMSnimci()
-    dicom_prozor.mainloop()
-
-
-if __name__ == "__main__":
-    main()
