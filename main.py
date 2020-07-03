@@ -78,7 +78,7 @@ class Gui(Tk):
 
     def pokreniEditProzor(self):
         try:
-            index = self.__listbox.curselection()[0]
+            index = self.__listbox.curselection()[0] #on pokusava tu da uzmeselektovani element u ovom slucaju to je pacijent
         except IndexError:
             return
 
@@ -149,7 +149,7 @@ class Gui(Tk):
         indeks = self.__listbox.curselection()[0]
         pacijent = self.__data[indeks]
         self.popuniLabele(pacijent)
-
+# ovo bi trebalo da su funkcije za pretragu usnimanjima ali to jos uvek nije odradjeno
     def recordingsListboxSelect(self, event=None):
         pass
 
@@ -183,7 +183,7 @@ class Gui(Tk):
             index = self.__rec_listbox.curselection()[0]
         except IndexError:
             return
-
+#ovo otvara prozor sa selektovanim elementom prvi parametar je izabrani DICOM iz cele liste a drugi parametar putanja do DICOMA
         dicomWindow = snimanjaDICOM.DICOMSnimci(self.__allDicoms[index], self.__snimci[index], "open")
 
     def dodajNoviSnimak(self):
@@ -276,7 +276,7 @@ class Gui(Tk):
 
     def snimciListboxInsertData(self):
         self.__snimci = os.listdir("DICOM samples")
-
+#os.listdir cita sve fajlove u folderu(sistemska funkcija)
         self.__rec_listbox.delete(0, END)
         for snimak in self.__snimci:
             read_dicom = pydicom.dcmread("DICOM samples/" + snimak, force=True)

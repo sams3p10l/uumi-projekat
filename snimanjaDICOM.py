@@ -17,21 +17,6 @@ from tkinter.ttk import Combobox
 
 class DICOMSnimci(Toplevel):
 
-    def starost_validacija(self):
-        try:
-            starost = int(self.__starost.get())
-            if starost < 0 or starost > 999:
-                messagebox.showerror("Greška", "Starost mora biti u rasponu od 0 do 999!")
-                return None
-        except ValueError:
-            messagebox.showerror("Greška", "Godina mora biti ceo broj!")
-            return None
-
-        return starost
-
-    def postavi_stanje_startost_frame_a(self, stanje):
-        for podelement in self.__starost_frame.winfo_children():  # iteracija kroz podelemente widget-a
-            podelement["state"] = stanje
 
     def postavi_datumrodj_frame_a(self, stanje):
         self.__datumrodj_entry["state"] = stanje
@@ -53,10 +38,6 @@ class DICOMSnimci(Toplevel):
         stanje = "readonly" if self.__tip_postoji.get() else DISABLED
         self.__tip_combobox["state"] = stanje
 
-    def komanda_starost_postoji(self):
-        stanje = NORMAL if self.__starost_postoji.get() else DISABLED
-        self.postavi_stanje_startost_frame_a(stanje)
-
     def komanda_datumrodj_postoji(self):
         stanje = NORMAL if self.__datumrodj_postoji.get() else DISABLED
         self.postavi_datumrodj_frame_a(stanje)
@@ -76,7 +57,6 @@ class DICOMSnimci(Toplevel):
     def azuriraj_stanja(self):
         self.komanda_pacijent_postoji()
         self.komanda_tip_postoji()
-        self.komanda_starost_postoji()
         self.komanda_datumrodj_postoji()
         self.komanda_datumsnimka_postoji()
         self.komanda_ime_lekara_postoji()
@@ -93,7 +73,6 @@ class DICOMSnimci(Toplevel):
             # omogućavanje interfejsa za izmenu i čuvanje
             self.__pacijent_postoji_checkbutton["state"] = NORMAL
             self.__tip_postoji_checkbutton["state"] = NORMAL
-            self.__starost_postoji_checkbutton["state"] = NORMAL
             self.__datumrodj_postoji_checkbutton["state"] = NORMAL
             self.__datumsnimka_postoji_checkbutton["state"] = NORMAL
             self.__ime_lekara_postoji_checkbutton["state"] = NORMAL
@@ -126,18 +105,6 @@ class DICOMSnimci(Toplevel):
             except:
                 print("No modality field")
 
-            try:
-                if self.__dataset["PatientAge"]:
-                    try:
-                        self.__starost.set(int(self.__dataset.PatientAge[:-1]))
-                        self.__starost_jedinica.set(self.__dataset.PatientAge[-1])
-                        self.__starost_postoji.set(True)
-                    except ValueError:
-                        pass
-                else:
-                    self.__starost_postoji.set(False)
-            except:
-                print("No patient age field")
 
             try:
                 if self.__dataset["ReferringPhysicianName"]:
@@ -219,7 +186,6 @@ class DICOMSnimci(Toplevel):
     def komanda_dodaj(self):
         self.__pacijent_postoji_checkbutton["state"] = NORMAL
         self.__tip_postoji_checkbutton["state"] = NORMAL
-        self.__starost_postoji_checkbutton["state"] = NORMAL
         self.__datumrodj_postoji_checkbutton["state"] = NORMAL
         self.__datumsnimka_postoji_checkbutton["state"] = NORMAL
         self.__ime_lekara_postoji_checkbutton["state"] = NORMAL
@@ -269,18 +235,6 @@ class DICOMSnimci(Toplevel):
             except:
                 print("No modality field")
 
-            try:
-                if self.__dataset["PatientAge"]:
-                    try:
-                        self.__starost.set(int(self.__dataset.PatientAge[:-1]))
-                        self.__starost_jedinica.set(self.__dataset.PatientAge[-1])
-                        self.__starost_postoji.set(True)
-                    except ValueError:
-                        pass
-                else:
-                    self.__starost_postoji.set(False)
-            except:
-                print("No patient age field")
 
             try:
                 if self.__dataset["ReferringPhysicianName"]:
@@ -361,8 +315,6 @@ class DICOMSnimci(Toplevel):
     def komanda_ocisti(self):
         self.__pacijent.set("")
         self.__tip.set("US")
-        self.__starost.set(0)
-        self.__starost_jedinica.set("Y")
         self.__datumrodj.set("")
         self.__datumsnimka.set("")
         self.__ime_lekara.set("")
@@ -389,15 +341,6 @@ class DICOMSnimci(Toplevel):
             naziv_fajla = naziv_fajla + self.__tip.get() + "-"
         elif "Modality" in self.__dataset:
             del self.__dataset.Modality
-
-        if self.__starost_postoji.get():
-            starost = self.starost_validacija()
-            if starost is None:
-                return
-
-            self.__dataset.PatientAge = "{:03d}{:}".format(starost, self.__starost_jedinica.get())
-        elif "PatientAge" in self.__dataset:
-            del self.__dataset.PatientAge
 
         if self.__datumrodj_postoji.get():
             self.__dataset.PatientBirthDate = datetime.strptime(str(self.__datumrodj.get()), "%Y%m%d")
@@ -466,10 +409,6 @@ class DICOMSnimci(Toplevel):
         self.__tip_postoji = BooleanVar(self, False)
         self.__tip = StringVar(self, "US")
 
-        self.__starost_postoji = BooleanVar(self, False)
-        self.__starost = IntVar(self)
-        self.__starost_jedinica = StringVar(self, "Y")
-
         self.__datumrodj_postoji = BooleanVar(self, False)
         self.__datumrodj = IntVar(self)
 
@@ -494,7 +433,6 @@ class DICOMSnimci(Toplevel):
         unos_frame.pack(side=RIGHT, fill=BOTH, expand=1)
 
         self.__datumrodj_frame = Frame(unos_frame)
-        self.__starost_frame = Frame(unos_frame)
         self.__datumsnimka_frame = Frame(unos_frame)
         self.__ime_lekara_frame = Frame(unos_frame)
         self.__izvestaj_frame = Frame(unos_frame)
@@ -503,8 +441,6 @@ class DICOMSnimci(Toplevel):
                                                           command=self.komanda_pacijent_postoji, state=DISABLED)
         self.__tip_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__tip_postoji,
                                                      command=self.komanda_tip_postoji, state=DISABLED)
-        self.__starost_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__starost_postoji,
-                                                         command=self.komanda_starost_postoji, state=DISABLED)
         self.__datumrodj_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__datumrodj_postoji,
                                                            command=self.komanda_datumrodj_postoji, state=DISABLED)
         self.__datumsnimka_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__datumsnimka_postoji,
@@ -526,17 +462,11 @@ class DICOMSnimci(Toplevel):
         self.__ime_lekara_entry = Entry(unos_frame, textvariable=self.__ime_lekara, state=DISABLED)
         self.__izvestaj_entry = Entry(unos_frame, textvariable=self.__izvestaj, state=DISABLED)
 
-        Spinbox(self.__starost_frame, from_=0, to=999, textvariable=self.__starost, state=DISABLED).pack(side=LEFT)
-        for vrednost, tekst in [("Y", "godina"), ("M", "meseci"), ("W", "nedelja"), ("D", "dana")]:
-            Radiobutton(self.__starost_frame, value=vrednost, text=tekst, variable=self.__starost_jedinica,
-                        state=DISABLED).pack(side=LEFT)
 
         red = 1
         self.__pacijent_postoji_checkbutton.grid(row=red)
         red += 1
         self.__tip_postoji_checkbutton.grid(row=red)
-        red += 1
-        self.__starost_postoji_checkbutton.grid(row=red)
         red += 1
         self.__datumrodj_postoji_checkbutton.grid(row=red)
         red += 1
@@ -551,8 +481,6 @@ class DICOMSnimci(Toplevel):
         Label(unos_frame, text="Pacijent:").grid(row=red, column=kolona, sticky=E)
         red += 1
         Label(unos_frame, text="Tip:").grid(row=red, column=kolona, sticky=E)
-        red += 1
-        Label(unos_frame, text="Starost:").grid(row=red, column=kolona, sticky=E)
         red += 1
         Label(unos_frame, text="Datum rodjenja:").grid(row=red, column=kolona, sticky=E)
         red += 1
@@ -569,8 +497,6 @@ class DICOMSnimci(Toplevel):
         self.__pacijent_entry.grid(row=red, column=kolona, sticky=W)
         red += 1
         self.__tip_combobox.grid(row=red, column=kolona, sticky=W)
-        red += 1
-        self.__starost_frame.grid(row=red, column=kolona, sticky=W)
         red += 1
         self.__datumrodj_entry.grid(row=red, column=kolona, sticky=W)
         red += 1
