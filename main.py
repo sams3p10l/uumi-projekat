@@ -187,7 +187,7 @@ class Gui(Tk):
         dicomWindow = snimanjaDICOM.DICOMSnimci(self.__allDicoms[index], self.__snimci[index], "open")
 
     def dodajNoviSnimak(self):
-        dicomWindow = snimanjaDICOM.DICOMSnimci(None, None, "add")
+        dicomWindow = snimanjaDICOM.DICOMSnimci(None, "", "add")
 
     def izmeniSnimak(self):
         try:

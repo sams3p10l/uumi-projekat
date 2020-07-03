@@ -7,6 +7,8 @@ import pydicom
 
 import numpy
 
+from datetime import datetime
+
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
@@ -102,54 +104,76 @@ class DICOMSnimci(Toplevel):
             self.__datoteka_meni.entryconfig(0, state=NORMAL)
             self.__datoteka_meni.entryconfig(1, state=NORMAL)
 
-            if "PatientName" in self.__dataset:
-                self.__pacijent.set(self.__dataset.PatientName)
-                self.__pacijent_postoji.set(True)
-            else:
-                self.__pacijent_postoji.set(False)
+            try:
+                if self.__dataset["PatientName"]:
+                    self.__pacijent.set(self.__dataset.PatientName)
+                    self.__pacijent_postoji.set(True)
+                else:
+                    self.__pacijent_postoji.set(False)
+            except:
+                print("No patient name field")
 
-            if "Modality" in self.__dataset:
-                for vrednost, tekst in [("CT", "Computed Tomography"), ("US", "Ultrasound]"), ("MR", "Magnetic Resonance"), ("PX", "Panoramic X-Ray")]:
-                    if vrednost == self.__dataset.Modality:
-                        self.__tip.set(tekst)
-                        break
-                self.__tip_postoji.set(True)
-            else:
-                self.__tip_postoji.set(False)
+            try:
+                if self.__dataset["Modality"]:
+                    for vrednost, tekst in [("CT", "Computed Tomography"), ("US", "Ultrasound]"),
+                                            ("MR", "Magnetic Resonance"), ("PX", "Panoramic X-Ray")]:
+                        if vrednost == self.__dataset.Modality:
+                            self.__tip.set(tekst)
+                            break
+                    self.__tip_postoji.set(True)
+                else:
+                    self.__tip_postoji.set(False)
+            except:
+                print("No modality field")
 
-            if "PatientAge" in self.__dataset:
-                try:
-                    self.__starost.set(int(self.__dataset.PatientAge[:-1]))
-                    self.__starost_jedinica.set(self.__dataset.PatientAge[-1])
-                    self.__starost_postoji.set(True)
-                except ValueError:
-                    pass
-            else:
-                self.__starost_postoji.set(False)
+            try:
+                if self.__dataset["PatientAge"]:
+                    try:
+                        self.__starost.set(int(self.__dataset.PatientAge[:-1]))
+                        self.__starost_jedinica.set(self.__dataset.PatientAge[-1])
+                        self.__starost_postoji.set(True)
+                    except ValueError:
+                        pass
+                else:
+                    self.__starost_postoji.set(False)
+            except:
+                print("No patient age field")
 
-            if "Referring Physician’s Name" in self.__dataset:  # da li podatak postoji u dataset-u?
-                self.__ime_lekara.set(self.__dataset.ReferringPhysicianName)  # vrednost podatka
-                self.__ime_lekara_postoji.set(True)
-            else:
-                self.__ime_lekara_postoji.set(False)
+            try:
+                if self.__dataset["ReferringPhysicianName"]:
+                    self.__ime_lekara.set(self.__dataset.ReferringPhysicianName)  # vrednost podatka
+                    self.__ime_lekara_postoji.set(True)
+                else:
+                    self.__ime_lekara_postoji.set(False)
+            except:
+                print("No referring physician field")
 
-            if "Patient’s Birth Date" in self.__dataset:
-                self.__datumrodj.set(self.__dataset.PatientBirthDate)
-                self.__datumrodj_postoji.set(True)
-            else:
-                self.__datumrodj_postoji.set(False)
+            try:
+                if self.__dataset["PatientBirthDate"]:
+                    self.__datumrodj.set(self.__dataset.PatientBirthDate)
+                    self.__datumrodj_postoji.set(True)
+                else:
+                    self.__datumrodj_postoji.set(False)
+            except:
+                print("No patient birth date field")
 
-            if "Study Date" in self.__dataset:
-                self.__datumsnimka.set(self.__dataset.StudyDate)
-                self.__datumsnimka_postoji.set(True)
-            else:
-                self.__datumsnimka_postoji.set(False)
+            try:
+                if self.__dataset["StudyDate"]:
+                    self.__datumsnimka.set(self.__dataset.StudyDate)
+                    self.__datumsnimka_postoji.set(True)
+                else:
+                    self.__datumsnimka_postoji.set(False)
+            except:
+                print("No study date field")
 
-            if "Study Description" in self.__dataset:
-                self.__izvestaj.set(self.__dataset.StudyDescription)
-                self.__izvestaj_postoji.set(True)
-            else:
-                self.__izvestaj_postoji.set(False)
+            try:
+                if self.__dataset["StudyDescription"]:
+                    self.__izvestaj.set(self.__dataset.StudyDescription)
+                    self.__izvestaj_postoji.set(True)
+                else:
+                    self.__izvestaj_postoji.set(False)
+            except:
+                print("No study description field")
 
             self.azuriraj_stanja()  # omogućavanje polja za izmenu na osnovu pročitanih podataka
         except Exception as ex:  # desila se greška
@@ -157,7 +181,8 @@ class DICOMSnimci(Toplevel):
             print(ex)
 
         try:
-            pil_slika = pydicom_PIL.get_PIL_image(self.__dataset)  # pokušaj dekompresije i čitanja slike iz dataset objekta
+            pil_slika = pydicom_PIL.get_PIL_image(
+                self.__dataset)  # pokušaj dekompresije i čitanja slike iz dataset objekta
             sirina = pil_slika.width
             visina = pil_slika.height
             print("originalne dimenzije:", sirina, ",", visina)
@@ -165,22 +190,23 @@ class DICOMSnimci(Toplevel):
             maks_dimenzija = 900
             if sirina > maks_dimenzija or visina > maks_dimenzija:
                 if sirina > visina:  # smanjiti sliku po većoj od 2 dimenzije
-                    odnos = maks_dimenzija/sirina
+                    odnos = maks_dimenzija / sirina
                     sirina = maks_dimenzija
-                    visina = int(odnos*visina)  # manja dimenzija se smanjuje proporcionalno
+                    visina = int(odnos * visina)  # manja dimenzija se smanjuje proporcionalno
                 else:
-                    odnos = maks_dimenzija/visina
-                    sirina = int(odnos*sirina)  # manja dimenzija se smanjuje proporcionalno
+                    odnos = maks_dimenzija / visina
+                    sirina = int(odnos * sirina)  # manja dimenzija se smanjuje proporcionalno
                     visina = maks_dimenzija
             print("nove dimenzije:", sirina, ",", visina)
-            pil_slika = pil_slika.resize((sirina, visina), imagepil.LANCZOS)  # LANCZOS metoda je najbolja za smanjivanje slike
+            pil_slika = pil_slika.resize((sirina, visina),
+                                         imagepil.LANCZOS)  # LANCZOS metoda je najbolja za smanjivanje slike
 
             slika = ImageTk.PhotoImage(pil_slika)  # PIL slika se mora prevesti u TkInter sliku (ImageTk)
             self.__slika_label["image"] = slika
             self.__slika_label.image = slika
         except Exception as ex:  # desila se greška; reset-ovanje slike na podrazumevanu
             # PIL slika se mora prevesti u TkInter sliku (ImageTk)
-            #slika = ImageTk.PhotoImage(Image.new('L', (200, 200))) # crna slika dimenzija 200x200 piksela
+            # slika = ImageTk.PhotoImage(Image.new('L', (200, 200))) # crna slika dimenzija 200x200 piksela
             slika = ImageTk.PhotoImage(imagepil.open("DICOM-Logo.jpg"))  # bilo koja druga podrazumevana slika
             self.__slika_label["image"] = slika  # labeli se dodeljuje slika
             self.__slika_label.image = slika  # referenca na TkInter sliku se mora sačuvati, inače nece biti prikazana!
@@ -221,61 +247,84 @@ class DICOMSnimci(Toplevel):
             self.__datoteka_meni.entryconfig(0, state=DISABLED)
             self.__datoteka_meni.entryconfig(1, state=DISABLED)
 
-            if "PatientName" in self.__dataset:
-                self.__pacijent.set(self.__dataset.PatientName)
-                self.__pacijent_postoji.set(True)
-            else:
-                self.__pacijent_postoji.set(False)
+            try:
+                if self.__dataset["PatientName"]:
+                    self.__pacijent.set(self.__dataset.PatientName)
+                    self.__pacijent_postoji.set(True)
+                else:
+                    self.__pacijent_postoji.set(False)
+            except:
+                print("No patient name field")
 
-            if "Modality" in self.__dataset:
-                for vrednost, tekst in [("CT", "Computed Tomography"), ("US", "Ultrasound]"), ("MR", "Magnetic Resonance"), ("PX", "Panoramic X-Ray")]:
-                    if vrednost == self.__dataset.Modality:
-                        self.__tip.set(tekst)
-                        break
-                self.__tip_postoji.set(True)
-            else:
-                self.__tip_postoji.set(False)
+            try:
+                if self.__dataset["Modality"]:
+                    for vrednost, tekst in [("CT", "Computed Tomography"), ("US", "Ultrasound]"),
+                                            ("MR", "Magnetic Resonance"), ("PX", "Panoramic X-Ray")]:
+                        if vrednost == self.__dataset.Modality:
+                            self.__tip.set(tekst)
+                            break
+                    self.__tip_postoji.set(True)
+                else:
+                    self.__tip_postoji.set(False)
+            except:
+                print("No modality field")
 
-            if "PatientAge" in self.__dataset:
-                try:
-                    self.__starost.set(int(self.__dataset.PatientAge[:-1]))
-                    self.__starost_jedinica.set(self.__dataset.PatientAge[-1])
-                    self.__starost_postoji.set(True)
-                except ValueError:
-                    pass
-            else:
-                self.__starost_postoji.set(False)
+            try:
+                if self.__dataset["PatientAge"]:
+                    try:
+                        self.__starost.set(int(self.__dataset.PatientAge[:-1]))
+                        self.__starost_jedinica.set(self.__dataset.PatientAge[-1])
+                        self.__starost_postoji.set(True)
+                    except ValueError:
+                        pass
+                else:
+                    self.__starost_postoji.set(False)
+            except:
+                print("No patient age field")
 
-            if "Referring Physician’s Name" in self.__dataset:  # da li podatak postoji u dataset-u?
-                self.__ime_lekara.set(self.__dataset.ReferringPhysicianName)  # vrednost podatka
-                self.__ime_lekara_postoji.set(True)
-            else:
-                self.__ime_lekara_postoji.set(False)
+            try:
+                if self.__dataset["ReferringPhysicianName"]:
+                    self.__ime_lekara.set(self.__dataset.ReferringPhysicianName)  # vrednost podatka
+                    self.__ime_lekara_postoji.set(True)
+                else:
+                    self.__ime_lekara_postoji.set(False)
+            except:
+                print("No referring physician field")
 
-            if "Patient’s Birth Date" in self.__dataset:
-                self.__datumrodj.set(self.__dataset.PatientBirthDate)
-                self.__datumrodj_postoji.set(True)
-            else:
-                self.__datumrodj_postoji.set(False)
+            try:
+                if self.__dataset["PatientBirthDate"]:
+                    self.__datumrodj.set(self.__dataset.PatientBirthDate)
+                    self.__datumrodj_postoji.set(True)
+                else:
+                    self.__datumrodj_postoji.set(False)
+            except:
+                print("No patient birth date field")
 
-            if "Study Date" in self.__dataset:
-                self.__datumsnimka.set(self.__dataset.StudyDate)
-                self.__datumsnimka_postoji.set(True)
-            else:
-                self.__datumsnimka_postoji.set(False)
+            try:
+                if self.__dataset["StudyDate"]:
+                    self.__datumsnimka.set(self.__dataset.StudyDate)
+                    self.__datumsnimka_postoji.set(True)
+                else:
+                    self.__datumsnimka_postoji.set(False)
+            except:
+                print("No study date field")
 
-            if "Study Description" in self.__dataset:
-                self.__izvestaj.set(self.__dataset.StudyDescription)
-                self.__izvestaj_postoji.set(True)
-            else:
-                self.__izvestaj_postoji.set(False)
+            try:
+                if self.__dataset["StudyDescription"]:
+                    self.__izvestaj.set(self.__dataset.StudyDescription)
+                    self.__izvestaj_postoji.set(True)
+                else:
+                    self.__izvestaj_postoji.set(False)
+            except:
+                print("No study description field")
 
         except Exception as ex:  # desila se greška
             print()
             print(ex)
 
         try:
-            pil_slika = pydicom_PIL.get_PIL_image(self.__dataset)  # pokušaj dekompresije i čitanja slike iz dataset objekta
+            pil_slika = pydicom_PIL.get_PIL_image(
+                self.__dataset)  # pokušaj dekompresije i čitanja slike iz dataset objekta
             sirina = pil_slika.width
             visina = pil_slika.height
             print("originalne dimenzije:", sirina, ",", visina)
@@ -283,22 +332,23 @@ class DICOMSnimci(Toplevel):
             maks_dimenzija = 900
             if sirina > maks_dimenzija or visina > maks_dimenzija:
                 if sirina > visina:  # smanjiti sliku po većoj od 2 dimenzije
-                    odnos = maks_dimenzija/sirina
+                    odnos = maks_dimenzija / sirina
                     sirina = maks_dimenzija
-                    visina = int(odnos*visina)  # manja dimenzija se smanjuje proporcionalno
+                    visina = int(odnos * visina)  # manja dimenzija se smanjuje proporcionalno
                 else:
-                    odnos = maks_dimenzija/visina
-                    sirina = int(odnos*sirina)  # manja dimenzija se smanjuje proporcionalno
+                    odnos = maks_dimenzija / visina
+                    sirina = int(odnos * sirina)  # manja dimenzija se smanjuje proporcionalno
                     visina = maks_dimenzija
             print("nove dimenzije:", sirina, ",", visina)
-            pil_slika = pil_slika.resize((sirina, visina), imagepil.LANCZOS)  # LANCZOS metoda je najbolja za smanjivanje slike
+            pil_slika = pil_slika.resize((sirina, visina),
+                                         imagepil.LANCZOS)  # LANCZOS metoda je najbolja za smanjivanje slike
 
             slika = ImageTk.PhotoImage(pil_slika)  # PIL slika se mora prevesti u TkInter sliku (ImageTk)
             self.__slika_label["image"] = slika
             self.__slika_label.image = slika
         except Exception as ex:  # desila se greška; reset-ovanje slike na podrazumevanu
             # PIL slika se mora prevesti u TkInter sliku (ImageTk)
-            #slika = ImageTk.PhotoImage(Image.new('L', (200, 200))) # crna slika dimenzija 200x200 piksela
+            # slika = ImageTk.PhotoImage(Image.new('L', (200, 200))) # crna slika dimenzija 200x200 piksela
             slika = ImageTk.PhotoImage(imagepil.open("DICOM-Logo.jpg"))  # bilo koja druga podrazumevana slika
             self.__slika_label["image"] = slika  # labeli se dodeljuje slika
             self.__slika_label.image = slika  # referenca na TkInter sliku se mora sačuvati, inače nece biti prikazana!
@@ -322,16 +372,21 @@ class DICOMSnimci(Toplevel):
         self["cursor"] = "wait"
         self.update()
 
+        naziv_fajla = ""
+
         if self.__pacijent_postoji.get():  # podatak zadržan?
             self.__dataset.PatientName = self.__pacijent.get()  # vrednost podatka
+            naziv_fajla = naziv_fajla + self.__pacijent.get() + "-"
         elif "PatientName" in self.__dataset:
             del self.__dataset.PatientName  # brisanje podatka iz dataset-a
 
         if self.__tip_postoji.get():
-            for vrednost, tekst in [("CT", "Computed Tomography"), ("US", "Ultrasound]"), ("MR", "Magnetic Resonance"), ("PX", "Panoramic X-Ray")]:
+            for vrednost, tekst in [("CT", "Computed Tomography"), ("US", "Ultrasound]"), ("MR", "Magnetic Resonance"),
+                                    ("PX", "Panoramic X-Ray")]:
                 if tekst == self.__tip.get():
                     self.__dataset.Modality = vrednost
                     break
+            naziv_fajla = naziv_fajla + self.__tip.get() + "-"
         elif "Modality" in self.__dataset:
             del self.__dataset.Modality
 
@@ -345,14 +400,14 @@ class DICOMSnimci(Toplevel):
             del self.__dataset.PatientAge
 
         if self.__datumrodj_postoji.get():
-            self.__dataset.PatientBirthDate = self.__datumrodj.get()
+            self.__dataset.PatientBirthDate = datetime.strptime(str(self.__datumrodj.get()), "%Y%m%d")
         elif "PatientBirthDate" in self.__dataset:
             del self.__dataset.PatientBirthDate
 
         if self.__datumsnimka_postoji.get():
-           self.__dataset.StudyDate = self.__datumsnimka.get()
-        elif "PatientName" in self.__dataset:
-            del self.__dataset.PatientName
+            self.__dataset.StudyDate = self.__datumsnimka.get()
+        elif "StudyDate" in self.__dataset:
+            del self.__dataset.StudyDate
 
         if self.__ime_lekara_postoji.get():
             self.__dataset.ReferringPhysicianName = self.__ime_lekara.get()
@@ -365,7 +420,12 @@ class DICOMSnimci(Toplevel):
             del self.__dataset.StudyDescription
 
         try:
-            self.__dataset.save_as(self.__staza_do_datoteke)  # čuvanje dataset-a; ako ne postoji, biće kreiran
+            if self.__command == "add":
+                naziv_fajla = naziv_fajla + datetime.now().strftime("%d%m%Y")
+                self.__dataset.save_as(
+                    self.__staza_do_datoteke + naziv_fajla + ".dcm")  # čuvanje dataset-a; ako ne postoji, biće kreiran
+            else:
+                self.__dataset.save_as(self.__staza_do_datoteke)
         except Exception as ex:
             print()
             print(ex)
@@ -396,6 +456,10 @@ class DICOMSnimci(Toplevel):
         self.__command = command
         self.__staza_do_datoteke = "DICOM samples/" + fileName
 
+        self.__dataset = pydicom.Dataset()
+        self.__dataset.is_little_endian = True
+        self.__dataset.is_implicit_VR = True
+
         self.__pacijent_postoji = BooleanVar(self, False)
         self.__pacijent = StringVar(self)
 
@@ -415,7 +479,7 @@ class DICOMSnimci(Toplevel):
         self.__ime_lekara_postoji = BooleanVar(self, False)
         self.__ime_lekara = StringVar(self)
 
-        self.__izvestaj_postoji =  BooleanVar(self, False)
+        self.__izvestaj_postoji = BooleanVar(self, False)
         self.__izvestaj = StringVar(self)
 
         # pravljenje GUI-a
@@ -435,19 +499,28 @@ class DICOMSnimci(Toplevel):
         self.__ime_lekara_frame = Frame(unos_frame)
         self.__izvestaj_frame = Frame(unos_frame)
 
-        self.__pacijent_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__pacijent_postoji, command=self.komanda_pacijent_postoji, state=DISABLED)
-        self.__tip_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__tip_postoji, command=self.komanda_tip_postoji, state=DISABLED)
-        self.__starost_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__starost_postoji, command=self.komanda_starost_postoji, state=DISABLED)
-        self.__datumrodj_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__datumrodj_postoji, command=self.komanda_datumrodj_postoji, state=DISABLED)
-        self.__datumsnimka_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__datumsnimka_postoji, command=self.komanda_datumsnimka_postoji, state=DISABLED)
-        self.__izvestaj_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__izvestaj_postoji,command=self.komanda_izvestaj_postoji, state=DISABLED)
-        self.__ime_lekara_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__ime_lekara_postoji, command=self.komanda_ime_lekara_postoji, state=DISABLED)
+        self.__pacijent_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__pacijent_postoji,
+                                                          command=self.komanda_pacijent_postoji, state=DISABLED)
+        self.__tip_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__tip_postoji,
+                                                     command=self.komanda_tip_postoji, state=DISABLED)
+        self.__starost_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__starost_postoji,
+                                                         command=self.komanda_starost_postoji, state=DISABLED)
+        self.__datumrodj_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__datumrodj_postoji,
+                                                           command=self.komanda_datumrodj_postoji, state=DISABLED)
+        self.__datumsnimka_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__datumsnimka_postoji,
+                                                             command=self.komanda_datumsnimka_postoji, state=DISABLED)
+        self.__izvestaj_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__izvestaj_postoji,
+                                                          command=self.komanda_izvestaj_postoji, state=DISABLED)
+        self.__ime_lekara_postoji_checkbutton = Checkbutton(unos_frame, variable=self.__ime_lekara_postoji,
+                                                            command=self.komanda_ime_lekara_postoji, state=DISABLED)
 
         self.__ocisti_button = Button(unos_frame, text="Očisti", width=10, command=self.komanda_ocisti, state=DISABLED)
-        self.__sacuvaj_button = Button(unos_frame, text="Sačuvaj", width=10, command=self.komanda_sacuvaj, state=DISABLED)
+        self.__sacuvaj_button = Button(unos_frame, text="Sačuvaj", width=10, command=self.komanda_sacuvaj,
+                                       state=DISABLED)
 
         self.__pacijent_entry = Entry(unos_frame, textvariable=self.__pacijent, state=DISABLED)
-        self.__tip_combobox = Combobox(unos_frame, values=("US", "MR", "CT", "PX"), textvariable=self.__tip, state=DISABLED)
+        self.__tip_combobox = Combobox(unos_frame, values=("US", "MR", "CT", "PX"), textvariable=self.__tip,
+                                       state=DISABLED)
         self.__datumsnimka_entry = Entry(unos_frame, textvariable=self.__datumsnimka, state=DISABLED)
         self.__datumrodj_entry = Entry(unos_frame, textvariable=self.__datumrodj, state=DISABLED)
         self.__ime_lekara_entry = Entry(unos_frame, textvariable=self.__ime_lekara, state=DISABLED)
@@ -455,7 +528,8 @@ class DICOMSnimci(Toplevel):
 
         Spinbox(self.__starost_frame, from_=0, to=999, textvariable=self.__starost, state=DISABLED).pack(side=LEFT)
         for vrednost, tekst in [("Y", "godina"), ("M", "meseci"), ("W", "nedelja"), ("D", "dana")]:
-            Radiobutton(self.__starost_frame, value=vrednost, text=tekst, variable=self.__starost_jedinica, state=DISABLED).pack(side=LEFT)
+            Radiobutton(self.__starost_frame, value=vrednost, text=tekst, variable=self.__starost_jedinica,
+                        state=DISABLED).pack(side=LEFT)
 
         red = 1
         self.__pacijent_postoji_checkbutton.grid(row=red)
@@ -539,4 +613,3 @@ class DICOMSnimci(Toplevel):
             self.komanda_otvori_i_edituj()
         elif self.__command == "add":
             self.komanda_dodaj()
-
